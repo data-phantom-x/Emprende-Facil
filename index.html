@@ -13,6 +13,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js (gráficos) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     
     <!-- FIREBASE SDK -->
     <script type="module">
@@ -147,7 +149,7 @@
             </div>
             
             <div class="flex space-x-2 bg-slate-100/80 p-1 rounded-2xl backdrop-blur-md border border-slate-200/50">
-                <button @click="currentView = 'productos'" 
+                <button @click="currentView = 'productos'; renderCharts()" 
                     :class="currentView === 'productos' ? 'bg-white text-brand-500 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
                     class="px-4 py-2 rounded-xl text-sm transition-all duration-300 flex items-center space-x-2">
                     <i class="fa-solid fa-box-open"></i>
@@ -264,6 +266,55 @@
                             </div>
                             <div class="text-2xl font-black text-blue-600 tracking-tight" x-text="formatMoney(getTotalProfitPotential())"></div>
                             <p class="text-[10px] font-bold text-slate-400 mt-1">Si vendes todo</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRÁFICOS -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] border border-slate-100 mb-6 fade-in-up">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-11 h-11 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                            <i class="fa-solid fa-chart-pie text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight">Gráficos del negocio</h2>
+                            <p class="text-xs text-slate-500 font-medium">A simple vista cómo se reparte tu dinero.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <!-- Dona: en qué se fue la plata -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">En qué se fue tu plata</h3>
+                            <div class="relative h-[220px]">
+                                <canvas id="chartReparto"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</span>
+                                    <strong class="text-lg font-black text-slate-700" x-text="formatMoney(getTotalSpent())"></strong>
+                                </div>
+                            </div>
+                            <div class="mt-4 space-y-2">
+                                <div class="flex items-center justify-between text-xs font-bold">
+                                    <span class="flex items-center gap-2 text-slate-500"><i class="w-2.5 h-2.5 rounded-full bg-amber-400"></i> Usado en recetas</span>
+                                    <span class="text-amber-500 font-black" x-text="formatMoney(getTotalUsedCost())"></span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs font-bold">
+                                    <span class="flex items-center gap-2 text-slate-500"><i class="w-2.5 h-2.5 rounded-full bg-emerald-400"></i> Te sobró</span>
+                                    <span class="text-emerald-500 font-black" x-text="formatMoney(getTotalLeftover())"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barras: costo vs precio por producto -->
+                        <div class="lg:col-span-3">
+                            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Costo y precio de venta por producto</h3>
+                            <div class="h-[260px]">
+                                <canvas id="chartPrecios"></canvas>
+                            </div>
+                            <div class="flex items-center justify-center gap-5 mt-3 text-[11px] font-bold text-slate-500">
+                                <span class="flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-rose-300"></i> Costo por unidad</span>
+                                <span class="flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-emerald-500"></i> Precio de venta</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -573,6 +624,9 @@
     </main>
 
     <script>
+        // Instancias de los gráficos (fuera de Alpine para no volverlas reactivas)
+        window.__charts = {};
+
         function keilynApp() {
             return {
                 tabs: [],
@@ -592,32 +646,175 @@
                     const checkFirebase = setInterval(() => {
                         if (window.db && window.firebaseOnSnapshot) {
                             clearInterval(checkFirebase);
-                            
+
                             // Escuchamos la base de datos de Firebase en tiempo real
                             window.firebaseOnSnapshot(window.firebaseDoc(window.db, "usuarios", "mi_negocio"), (docSnap) => {
-                                if (docSnap.exists()) {
-                                    const data = docSnap.data();
-                                    this.tabs = data.tabs || [];
-                                    if (!this.activeTabId && this.tabs.length > 0) {
-                                        this.activeTabId = this.tabs[0].id;
-                                    } else if (this.tabs.length === 0) {
-                                        this.activeTabId = null;
-                                    }
-                                } else {
-                                    this.tabs = [];
+                                const data = docSnap.exists() ? docSnap.data() : null;
+                                const estado = this.loadFromSnapshot(data);
+
+                                if (!this.activeTabId && this.tabs.length > 0) {
+                                    this.activeTabId = this.tabs[0].id;
+                                } else if (this.tabs.length === 0) {
+                                    this.activeTabId = null;
                                 }
+
+                                this.renderCharts();
+
+                                // Si venía del formato antiguo, reescribimos ordenadito
+                                if (estado === 'migrar') this.saveData();
                             });
                         }
                     }, 50);
                 },
 
-                saveData() {
-                    // Guardamos en Firebase cada vez que hay un cambio
-                    if(window.firebaseSetDoc && window.db) {
-                        const dataToSave = JSON.parse(JSON.stringify(this.tabs)); // Limpiamos Proxies de Alpine
-                        window.firebaseSetDoc(window.firebaseDoc(window.db, "usuarios", "mi_negocio"), { tabs: dataToSave })
-                            .catch(e => console.error("Error al guardar en Firebase:", e));
+                // ===== LECTURA DE FIREBASE =====
+                // Acepta el formato nuevo (objetos) y el antiguo (array "tabs")
+                loadFromSnapshot(data) {
+                    if (data && data.productos) {
+                        const lista = [];
+                        Object.keys(data.productos).forEach((clave) => {
+                            const p = data.productos[clave];
+                            const insumos = [];
+                            Object.keys(p.insumos || {}).forEach((claveIng) => {
+                                const i = p.insumos[claveIng];
+                                insumos.push({
+                                    id: i.id || claveIng,
+                                    name: i.nombre || '',
+                                    boughtQty: (i.cantidadComprada !== undefined) ? i.cantidadComprada : null,
+                                    unit: i.unidad || 'g',
+                                    totalCost: (i.precioPagadoTotal !== undefined) ? i.precioPagadoTotal : null,
+                                    usedQty: (i.cantidadUsadaEnReceta !== undefined) ? i.cantidadUsadaEnReceta : null
+                                });
+                            });
+                            lista.push({
+                                id: p.id || clave,
+                                name: p.nombre || 'Producto',
+                                seller: p.responsable || '',
+                                batchYield: this.num(p.unidadesQueSalen) || 0,
+                                margin: (p.precio && p.precio.porcentajeGanancia !== undefined && p.precio.porcentajeGanancia !== null) ? p.precio.porcentajeGanancia : 50,
+                                priceMode: (p.precio && p.precio.modo) || 'percent',
+                                customPrice: (p.precio && p.precio.precioPropio !== undefined) ? p.precio.precioPropio : null,
+                                ingredients: insumos
+                            });
+                        });
+                        this.tabs = lista;
+                        return 'ok';
                     }
+
+                    if (data && Array.isArray(data.tabs)) {
+                        this.tabs = data.tabs.map(t => ({
+                            id: t.id,
+                            name: t.name || 'Producto',
+                            seller: t.seller || '',
+                            batchYield: this.num(t.batchYield) || 0,
+                            margin: (t.margin !== undefined && t.margin !== null) ? t.margin : 50,
+                            priceMode: t.priceMode || 'percent',
+                            customPrice: (t.customPrice !== undefined) ? t.customPrice : null,
+                            ingredients: (t.ingredients || []).map(i => ({ ...i }))
+                        }));
+                        return 'migrar';
+                    }
+
+                    this.tabs = [];
+                    return 'ok';
+                },
+
+                // Convierte un nombre en una clave legible: "Empaná de pinocho" -> "empana-de-pinocho"
+                slugify(texto) {
+                    const base = String(texto || '')
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                    return base || 'producto';
+                },
+
+                // ===== GUARDADO ORDENADO =====
+                // Arma el documento con nombres claros para leerlo en la consola de Firebase
+                buildDocument() {
+                    const productos = {};
+                    const usados = {};
+
+                    this.tabs.forEach(tab => {
+                        let clave = this.slugify(tab.name);
+                        if (usados[clave]) {
+                            usados[clave]++;
+                            clave = clave + '-' + usados[clave];
+                        } else {
+                            usados[clave] = 1;
+                        }
+
+                        const insumos = {};
+                        (tab.ingredients || []).forEach(ing => {
+                            insumos[ing.id] = {
+                                id: ing.id,
+                                nombre: ing.name || '(sin nombre)',
+                                unidad: ing.unit || 'g',
+                                cantidadComprada: this.num(ing.boughtQty),
+                                precioPagadoTotal: this.num(ing.totalCost),
+                                cantidadUsadaEnReceta: this.num(ing.usedQty),
+                                costoRealDeLoUsado: this.round2(this.getIngredientUsedCost(ing))
+                            };
+                        });
+
+                        const costoUnidad = this.getCostPerItem(tab);
+                        const precioUnidad = this.getSuggestedPrice(tab);
+
+                        productos[clave] = {
+                            id: tab.id,
+                            nombre: tab.name || 'Sin nombre',
+                            responsable: tab.seller || '',
+                            unidadesQueSalen: this.num(tab.batchYield),
+                            precio: {
+                                modo: tab.priceMode || 'percent',
+                                porcentajeGanancia: this.num(tab.margin),
+                                precioPropio: (tab.priceMode === 'custom') ? this.num(tab.customPrice) : null
+                            },
+                            compras: {
+                                totalPagado: this.round2(this.getTabSpent(tab)),
+                                totalUsadoEnReceta: this.round2(this.getTotalBatchCost(tab)),
+                                sobrante: this.round2(this.getTabLeftover(tab))
+                            },
+                            resumen: {
+                                costoDelLoteCompleto: this.round2(this.getTotalBatchCost(tab)),
+                                costoPorUnidad: this.round2(costoUnidad),
+                                precioDeVentaPorUnidad: this.round2(precioUnidad),
+                                gananciaPorUnidad: this.round2(precioUnidad - costoUnidad),
+                                gananciaDelLoteCompleto: this.round2(this.getProfitPerBatch(tab)),
+                                porcentajeDeGanancia: costoUnidad > 0 ? this.getMarginOverCost(tab) : 0
+                            },
+                            insumos: insumos
+                        };
+                    });
+
+                    return {
+                        version: 2,
+                        negocio: {
+                            nombre: 'El Negocio de Keilyn',
+                            descripcion: 'Productos, compras, costos y precios de venta'
+                        },
+                        resumenGeneral: {
+                            totalGastado: this.round2(this.getTotalSpent()),
+                            totalUsadoEnRecetas: this.round2(this.getTotalUsedCost()),
+                            sobrante: this.round2(this.getTotalLeftover()),
+                            porcentajeAprovechado: this.getUsedPercent(),
+                            gananciaSiSeVendeTodo: this.round2(this.getTotalProfitPotential())
+                        },
+                        productos: productos
+                    };
+                },
+
+                saveData() {
+                    // Guardamos en Firebase con un pequeño retraso para no saturar la base
+                    clearTimeout(this._saveTimer);
+                    this._saveTimer = setTimeout(() => {
+                        if (window.firebaseSetDoc && window.db) {
+                            const documento = this.buildDocument();
+                            window.firebaseSetDoc(window.firebaseDoc(window.db, "usuarios", "mi_negocio"), documento)
+                                .catch(e => console.error("Error al guardar en Firebase:", e));
+                        }
+                        this.renderCharts();
+                    }, 500);
                 },
 
                 // Modal Functions
@@ -702,7 +899,7 @@
                 },
 
                 getTotalBatchCost(tab) {
-                    return tab.ingredients.reduce((total, ing) => total + this.getIngredientUsedCost(ing), 0);
+                    return (tab.ingredients || []).reduce((total, ing) => total + this.getIngredientUsedCost(ing), 0);
                 },
 
                 getCostPerItem(tab) {
@@ -747,7 +944,7 @@
 
                 // ===== Resumen global de dinero =====
                 getTotalSpent() {
-                    return this.tabs.reduce((total, tab) => total + tab.ingredients.reduce((s, ing) => s + (ing.totalCost || 0), 0), 0);
+                    return this.tabs.reduce((total, tab) => total + (tab.ingredients || []).reduce((s, ing) => s + this.num(ing.totalCost), 0), 0);
                 },
 
                 getTotalUsedCost() {
@@ -770,21 +967,198 @@
 
                 // ===== Resumen por producto =====
                 getTabSpent(tab) {
-                    return tab.ingredients.reduce((s, ing) => s + (ing.totalCost || 0), 0);
+                    return (tab.ingredients || []).reduce((s, ing) => s + this.num(ing.totalCost), 0);
                 },
 
                 getTabLeftover(tab) {
                     return Math.max(0, this.getTabSpent(tab) - this.getTotalBatchCost(tab));
                 },
 
-                // Utils
+                // ===== GRÁFICOS =====
+                renderCharts() {
+                    if (typeof Chart === 'undefined') return;
+                    // Los canvas solo existen cuando la vista de productos está visible
+                    this.$nextTick(() => {
+                        const c1 = document.getElementById('chartReparto');
+                        const c2 = document.getElementById('chartPrecios');
+                        if (!c1) this.destroyChart('reparto');
+                        if (!c2) this.destroyChart('precios');
+
+                        if (c1 && c1.offsetParent !== null) this.drawReparto(c1);
+                        else this.resizeChart('reparto');
+
+                        if (c2 && c2.offsetParent !== null) this.drawPrecios(c2);
+                        else this.resizeChart('precios');
+                    });
+                },
+
+                // Si el canvas fue reemplazado (borramos todos los productos), rehacemos el gráfico
+                chartCanvasDistinto(clave, canvas) {
+                    const inst = window.__charts[clave];
+                    if (inst && inst.canvas !== canvas) {
+                        inst.destroy();
+                        window.__charts[clave] = null;
+                        return true;
+                    }
+                    return false;
+                },
+
+                destroyChart(clave) {
+                    if (window.__charts[clave]) {
+                        window.__charts[clave].destroy();
+                        window.__charts[clave] = null;
+                    }
+                },
+
+                resizeChart(clave) {
+                    const inst = window.__charts[clave];
+                    if (inst) inst.resize();
+                },
+
+                chartBaseOptions() {
+                    return {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 600, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1E293B',
+                                padding: 10,
+                                cornerRadius: 10,
+                                titleFont: { family: 'Quicksand', weight: '800' },
+                                bodyFont: { family: 'Quicksand', weight: '700' },
+                                displayColors: false,
+                                callbacks: {
+                                    label: (ctx) => this.formatMoney(ctx.parsed.y !== undefined && ctx.parsed.y !== null ? ctx.parsed.y : ctx.parsed)
+                                }
+                            }
+                        }
+                    };
+                },
+
+                drawReparto(canvas) {
+                    const usado = this.getTotalUsedCost();
+                    const sobrante = this.getTotalLeftover();
+                    const total = usado + sobrante;
+
+                    const datos = {
+                        labels: ['Usado en recetas', 'Te sobró'],
+                        datasets: [{
+                            data: total > 0 ? [usado, sobrante] : [1, 0],
+                            backgroundColor: total > 0 ? ['#FBBF24', '#34D399'] : ['#F1F5F9', '#F1F5F9'],
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    };
+
+                    const opciones = this.chartBaseOptions();
+                    opciones.cutout = '72%';
+                    opciones.plugins.tooltip.callbacks.label = (ctx) => {
+                        const v = ctx.parsed;
+                        const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                        return `${this.formatMoney(v)} · ${pct}%`;
+                    };
+
+                    if (this.chartCanvasDistinto('reparto', canvas)) {
+                        window.__charts.reparto = new Chart(canvas.getContext('2d'), {
+                            type: 'doughnut',
+                            data: datos,
+                            options: opciones
+                        });
+                    } else {
+                        window.__charts.reparto.data = datos;
+                        window.__charts.reparto.options = opciones;
+                        window.__charts.reparto.update();
+                    }
+                },
+
+                drawPrecios(canvas) {
+                    const etiquetas = this.tabs.map(t => (t.name || 'Producto').trim().slice(0, 14));
+                    const costos = this.tabs.map(t => Math.round(this.getCostPerItem(t)));
+                    const precios = this.tabs.map(t => Math.round(this.getSuggestedPrice(t)));
+
+                    const op = this.chartBaseOptions();
+                    op.scales = {
+                        x: {
+                            grid: { display: false },
+                            border: { display: false },
+                            ticks: { font: { family: 'Quicksand', weight: '700', size: 10 }, color: '#94A3B8', maxRotation: 0, autoSkip: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#F1F5F9', drawTicks: false },
+                            border: { display: false },
+                            ticks: {
+                                font: { family: 'Quicksand', weight: '700', size: 10 },
+                                color: '#CBD5E1',
+                                padding: 8,
+                                callback: (v) => this.formatMoneyAxis(v)
+                            }
+                        }
+                    };
+
+                    const datos = {
+                        labels: etiquetas,
+                        datasets: [
+                            {
+                                label: 'Costo',
+                                data: costos,
+                                backgroundColor: '#FDA4AF',
+                                borderRadius: 6,
+                                borderSkipped: false,
+                                barPercentage: 0.7,
+                                categoryPercentage: 0.68
+                            },
+                            {
+                                label: 'Venta',
+                                data: precios,
+                                backgroundColor: '#10B981',
+                                borderRadius: 6,
+                                borderSkipped: false,
+                                barPercentage: 0.7,
+                                categoryPercentage: 0.68
+                            }
+                        ]
+                    };
+
+                    if (this.chartCanvasDistinto('precios', canvas)) {
+                        window.__charts.precios = new Chart(canvas.getContext('2d'), {
+                            type: 'bar',
+                            data: datos,
+                            options: op
+                        });
+                    } else {
+                        window.__charts.precios.data = datos;
+                        window.__charts.precios.update();
+                    }
+                },
+
+                // ===== Utils =====
+                num(v) {
+                    return (v === null || v === undefined || v === '' || isNaN(v)) ? 0 : Number(v);
+                },
+
+                round2(v) {
+                    return Math.round(this.num(v) * 100) / 100;
+                },
+
+                // $1.500.000 (puntos de miles, estilo chileno)
                 formatMoney(amount) {
-                    if (isNaN(amount) || amount === null) return '$0';
-                    return new Intl.NumberFormat('es-CL', { 
-                        style: 'currency', 
-                        currency: 'CLP',
-                        maximumFractionDigits: 0 
-                    }).format(Math.round(amount));
+                    const n = Math.round(this.num(amount));
+                    if (!isFinite(n)) return '$0';
+                    const signo = n < 0 ? '-' : '';
+                    const abs = Math.abs(n).toString();
+                    const conPuntos = abs.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    return signo + '$' + conPuntos;
+                },
+
+                // Versión corta para ejes de gráficos (mantiene los puntos)
+                formatMoneyAxis(v) {
+                    const n = Math.abs(v);
+                    if (n >= 1000000) return '$' + (v / 1000000).toFixed(1).replace('.', ',') + 'M';
+                    if (n >= 1000) return '$' + Math.round(v / 1000) + 'k';
+                    return '$' + Math.round(v);
                 }
             }
         }
