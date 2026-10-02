@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Negocios de Keilyn</title>
+    <title>Emprende Fácil · El Negocio de Keilyn</title>
+    <meta name="description" content="Calcula el costo, el precio de venta y las ganancias de tus productos.">
+    <meta name="robots" content="noindex, nofollow">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js Core -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
@@ -16,14 +18,17 @@
     <!-- Chart.js (gráficos) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     
-    <!-- FIREBASE SDK -->
+    <!-- FIREBASE: Realtime Database + Login con Google -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+            from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCapjkz4V0Qu6OCX9DRZBhlNkYgF10s-8M",
             authDomain: "emprende-facil-c05bb.firebaseapp.com",
+            databaseURL: "https://emprende-facil-c05bb-default-rtdb.firebaseio.com",
             projectId: "emprende-facil-c05bb",
             storageBucket: "emprende-facil-c05bb.firebasestorage.app",
             messagingSenderId: "348314913164",
@@ -31,12 +36,25 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        
-        // Exponemos Firebase a window para que Alpine.js pueda usarlo
-        window.db = getFirestore(app);
-        window.firebaseDoc = doc;
-        window.firebaseOnSnapshot = onSnapshot;
-        window.firebaseSetDoc = setDoc;
+
+        // OJO: aquí NO hay lista de correos permitidos a propósito.
+        // Este archivo es público (GitHub), así que no publicamos correos de nadie.
+        // El permiso real lo deciden las REGLAS de Realtime Database:
+        // si la cuenta no está autorizada, Firebase le niega la lectura
+        // y la app muestra "Acceso restringido".
+
+        // Exponemos todo a window para que Alpine.js lo use
+        window.db = getDatabase(app);
+        window.rtdbRef = ref;
+        window.rtdbSet = set;
+        window.rtdbOnValue = onValue;
+
+        window.auth = getAuth(app);
+        window.authGoogle = new GoogleAuthProvider();
+        window.authGoogle.setCustomParameters({ prompt: 'select_account' });
+        window.authSignIn = signInWithPopup;
+        window.authSignOut = signOut;
+        window.authOnChange = onAuthStateChanged;
     </script>
 
     <script>
@@ -121,23 +139,116 @@
 
 <body class="text-slate-700 antialiased selection:bg-brand-200 selection:text-brand-900" x-data="keilynApp()" x-init="initApp()">
 
-    <!-- Modal de Confirmación -->
-    <div x-show="modal.show" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center px-4" x-transition.opacity>
-        <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" @click="closeModal()"></div>
-        <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-2xl relative z-10 w-full max-w-sm transform transition-all text-center" x-transition.scale>
-            <div class="w-20 h-20 rounded-full bg-brand-50 text-brand-400 flex items-center justify-center text-4xl mb-4 mx-auto animate-bounce-soft">
-                <i :class="modal.icon || 'fa-solid fa-heart'"></i>
+    <!-- Pantalla de Login -->
+    <div x-show="cargandoSesion || !accesoConcedido" class="fixed inset-0 z-[200] bg-gradient-to-br from-brand-50 via-white to-pink-50 flex items-center justify-center px-4"
+        x-cloak>
+        <div class="text-center max-w-sm w-full">
+
+            <!-- Cargando -->
+            <div x-show="cargandoSesion || (usuario && !accesoDenegado && !errorConexion)">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-brand-300 to-pink-400 flex items-center justify-center text-white shadow-xl shadow-pink-200 animate-float mb-6">
+                    <i class="fa-solid fa-store text-2xl"></i>
+                </div>
+                <p class="text-slate-400 font-bold" x-text="cargandoSesion ? 'Abriendo tu negocio...' : 'Verificando tu acceso...'"></p>
             </div>
-            <h3 class="text-2xl font-extrabold text-slate-800 mb-2" x-text="modal.title"></h3>
-            <p class="text-slate-500 mb-8 font-medium leading-relaxed" x-text="modal.message"></p>
-            <div class="flex space-x-3">
-                <button @click="closeModal()" class="flex-1 py-3 rounded-2xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-all duration-300">Volver</button>
-                <button @click="executeModalAction()" class="flex-1 py-3 rounded-2xl font-bold text-white bg-brand-400 hover:bg-brand-500 shadow-lg shadow-brand-200 transition-all duration-300 hover:-translate-y-1">Sí, seguro</button>
+
+            <!-- Cuenta no autorizada -->
+            <div x-show="!cargandoSesion && usuario && accesoDenegado" x-transition.opacity>
+                <div class="w-24 h-24 mx-auto rounded-[2rem] bg-slate-100 flex items-center justify-center text-slate-300 shadow-inner mb-6">
+                    <i class="fa-solid fa-lock text-4xl"></i>
+                </div>
+
+                <h1 class="text-3xl font-black text-slate-800 mb-3">Acceso restringido</h1>
+                <p class="text-slate-500 font-medium mb-6 leading-relaxed">
+                    Esta cuenta no tiene permiso para ver el negocio.
+                </p>
+
+                <p class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 mb-6 break-all">
+                    Entraste con: <span x-text="usuario ? usuario.email : ''"></span>
+                </p>
+
+                <button type="button" @click="cerrarSesion()"
+                    class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-slate-300 hover:shadow-lg rounded-2xl py-4 font-bold text-slate-700 transition-all duration-300">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Salir y probar otra cuenta</span>
+                </button>
+            </div>
+
+            <!-- Login -->
+            <div x-show="!cargandoSesion && !usuario" x-transition.opacity>
+                <div x-show="!errorConexion">
+                    <div class="w-24 h-24 mx-auto rounded-[2rem] bg-gradient-to-tr from-brand-300 to-pink-400 flex items-center justify-center text-white shadow-2xl shadow-pink-200 mb-6 animate-float">
+                        <i class="fa-solid fa-store text-4xl"></i>
+                    </div>
+                </div>
+
+                <div x-show="errorConexion" class="w-24 h-24 mx-auto rounded-[2rem] bg-rose-100 flex items-center justify-center text-rose-400 mb-6">
+                    <i class="fa-solid fa-wifi text-4xl"></i>
+                </div>
+
+                <h1 class="text-3xl font-black text-slate-800 mb-2" x-text="errorConexion ? 'Sin conexión' : 'El Negocio de Keilyn'"></h1>
+                <p class="text-slate-500 font-medium mb-8" x-text="errorConexion || 'Calcula tus costos, precios y ganancias sin perder un peso.'"></p>
+
+                <div x-show="!errorConexion">
+                    <button @click="iniciarSesion()" :disabled="iniciando" type="button"
+                        class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-slate-300 hover:shadow-lg rounded-2xl py-4 font-bold text-slate-700 transition-all duration-300 disabled:opacity-60 disabled:cursor-wait">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.65l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 0 0-9.82 6.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+                        </svg>
+                        <span x-text="iniciando ? 'Entrando...' : 'Entrar con Google'"></span>
+                    </button>
+
+                    <p x-show="errorAuth" x-cloak class="mt-4 text-sm font-bold text-rose-500 leading-relaxed" x-text="errorAuth"></p>
+
+                    <p class="mt-8 text-[11px] text-slate-400 font-medium leading-relaxed px-4">
+                        Solo pueden entrar las cuentas autorizadas del negocio.
+                    </p>
+                </div>
+
+                <button type="button" x-show="errorConexion" @click="location.reload()"
+                    class="w-full flex items-center justify-center gap-3 bg-brand-400 hover:bg-brand-500 text-white rounded-2xl py-4 font-bold shadow-lg shadow-brand-200 transition-all duration-300 hover:-translate-y-1">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Reintentar</span>
+                </button>
+            </div>
+
+            <!-- Conectado pero sin poder leer -->
+            <div x-show="!cargandoSesion && usuario && !accesoDenegado && errorConexion" x-transition.opacity>
+                <div class="w-24 h-24 mx-auto rounded-[2rem] bg-rose-100 flex items-center justify-center text-rose-400 mb-6">
+                    <i class="fa-solid fa-wifi text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-black text-slate-800 mb-3">Sin conexión</h1>
+                <p class="text-slate-500 font-medium mb-6 leading-relaxed" x-text="errorConexion"></p>
+                <button type="button" @click="location.reload()"
+                    class="w-full flex items-center justify-center gap-3 bg-brand-400 hover:bg-brand-500 text-white rounded-2xl py-4 font-bold shadow-lg shadow-brand-200 transition-all duration-300 hover:-translate-y-1">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Reintentar</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <header class="glass-panel sticky top-0 z-40 border-b border-brand-50 shadow-sm">
+    <!-- Modal de Confirmación -->
+    <div x-show="modal.show" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center px-4" x-transition.opacity
+        @keydown.escape.window="closeModal()" role="dialog" aria-modal="true" :aria-label="modal.title">
+        <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" @click="closeModal()"></div>
+        <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-2xl relative z-10 w-full max-w-sm transform transition-all text-center" x-transition.scale>
+            <div class="w-20 h-20 rounded-full bg-brand-50 text-brand-400 flex items-center justify-center text-4xl mb-4 mx-auto animate-bounce-soft">
+                <i :class="modal.icon || 'fa-solid fa-heart'" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-800 mb-2" x-text="modal.title"></h3>
+            <p class="text-slate-500 mb-8 font-medium leading-relaxed" x-text="modal.message"></p>
+            <div class="flex space-x-3">
+                <button type="button" @click="closeModal()" class="flex-1 py-3 rounded-2xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 hover:text-slate-700 transition-all duration-300">Volver</button>
+                <button type="button" @click="executeModalAction()" class="flex-1 py-3 rounded-2xl font-bold text-white bg-brand-400 hover:bg-brand-500 shadow-lg shadow-brand-200 transition-all duration-300 hover:-translate-y-1">Sí, seguro</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="glass-panel sticky top-0 z-40 border-b border-brand-50 shadow-sm" x-show="accesoConcedido" x-cloak>
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-300 to-pink-400 flex items-center justify-center text-white shadow-lg shadow-pink-200 animate-float">
@@ -148,24 +259,61 @@
                 </div>
             </div>
             
-            <div class="flex space-x-2 bg-slate-100/80 p-1 rounded-2xl backdrop-blur-md border border-slate-200/50">
-                <button @click="currentView = 'productos'; renderCharts()" 
-                    :class="currentView === 'productos' ? 'bg-white text-brand-500 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
-                    class="px-4 py-2 rounded-xl text-sm transition-all duration-300 flex items-center space-x-2">
-                    <i class="fa-solid fa-box-open"></i>
-                    <span class="hidden sm:inline">Mis Productos</span>
-                </button>
-                <button @click="currentView = 'academia'" 
-                    :class="currentView === 'academia' ? 'bg-white text-purple-500 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
-                    class="px-4 py-2 rounded-xl text-sm transition-all duration-300 flex items-center space-x-2">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                    <span class="hidden sm:inline">Academia</span>
-                </button>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Usuario conectado -->
+                <div x-show="accesoConcedido" x-cloak class="hidden md:flex items-center gap-2.5 bg-white/70 border border-slate-200/70 rounded-2xl pl-2.5 pr-3 py-1.5">
+                    <img :src="usuario.photoURL" :alt="'Foto de ' + usuario.displayName" referrerpolicy="no-referrer"
+                        class="w-8 h-8 rounded-full object-cover ring-2 ring-white">
+                    <div class="leading-tight">
+                        <p class="text-xs font-black text-slate-700 max-w-[130px] truncate" x-text="usuario.displayName"></p>
+                        <p class="text-[10px] font-bold text-slate-400" x-text="usuario.email"></p>
+                    </div>
+                    <button type="button" @click="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión"
+                        class="ml-1 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="flex space-x-2 bg-slate-100/80 p-1 rounded-2xl backdrop-blur-md border border-slate-200/50">
+                    <button type="button" @click="currentView = 'productos'; renderCharts()" 
+                        :class="currentView === 'productos' ? 'bg-white text-brand-500 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
+                        class="px-4 py-2 rounded-xl text-sm transition-all duration-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-box-open"></i>
+                        <span class="hidden sm:inline">Mis Productos</span>
+                    </button>
+                    <button type="button" @click="currentView = 'academia'" 
+                        :class="currentView === 'academia' ? 'bg-white text-purple-500 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
+                        class="px-4 py-2 rounded-xl text-sm transition-all duration-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span class="hidden sm:inline">Academia</span>
+                    </button>
+                    <!-- Salir (solo en móvil) -->
+                    <button type="button" @click="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión"
+                        class="md:hidden px-3 py-2 rounded-xl text-sm text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 min-h-[80vh]">
+    <!-- Aviso: no se pudo guardar -->
+    <div x-show="errorGuardado" x-cloak
+        class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[150] w-[calc(100%-2rem)] max-w-md">
+        <div class="bg-rose-600 text-white rounded-2xl shadow-2xl shadow-rose-900/30 px-4 py-3.5 flex items-start gap-3" role="alert">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+            <div class="flex-1">
+                <p class="text-sm font-black">No se guardó</p>
+                <p class="text-xs font-medium text-rose-100 leading-relaxed mt-0.5" x-text="errorGuardado"></p>
+            </div>
+            <button type="button" @click="errorGuardado = ''" aria-label="Cerrar aviso"
+                class="text-rose-200 hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 min-h-[80vh]" x-show="accesoConcedido" x-cloak>
         
         <!-- VISTA DE PRODUCTOS -->
         <div x-show="currentView === 'productos'" x-transition.opacity.duration.400ms>
@@ -178,9 +326,9 @@
                     </div>
                     <i class="fa-solid fa-seedling text-7xl text-brand-300"></i>
                 </div>
-                <h2 class="text-3xl font-black text-slate-800 mb-3">¡Hola Mi Amorcito! ❤️</h2>
+                <h2 class="text-3xl font-black text-slate-800 mb-3" x-text="nombreCorto ? '¡Hola ' + nombreCorto + '! ❤️' : ''"></h2>
                 <p class="text-slate-500 max-w-md mx-auto mb-8 text-lg font-medium">Todo gran imperio comienza con un primer producto. ¿Qué prepararemos hoy? ¿Empanadas, tortas, galletas?</p>
-                <button @click="addTab()" class="px-8 py-4 bg-brand-400 text-white rounded-2xl font-bold text-lg shadow-xl shadow-brand-200 hover:bg-brand-500 hover:-translate-y-1 transition-all duration-300 flex items-center space-x-3 group">
+                <button @click="addTab()" type="button" class="px-8 py-4 bg-brand-400 text-white rounded-2xl font-bold text-lg shadow-xl shadow-brand-200 hover:bg-brand-500 hover:-translate-y-1 transition-all duration-300 flex items-center space-x-3 group">
                     <i class="fa-solid fa-plus-circle group-hover:rotate-90 transition-transform duration-300"></i>
                     <span>Crear mi primer producto</span>
                 </button>
@@ -189,24 +337,26 @@
             <!-- Interfaz con datos -->
             <div x-show="tabs.length > 0" x-cloak>
                 <!-- Pestañas (Tabs) -->
-                <div class="flex items-center justify-between mb-6 pb-2 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar gap-2 fade-in-up">
+                <div class="flex items-center justify-between mb-6 pb-2 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar gap-2 fade-in-up" role="tablist">
                     <div class="flex items-center space-x-2">
                         <template x-for="tab in tabs" :key="tab.id">
                             <div class="relative group">
-                                <button @click="activeTabId = tab.id"
+                                <div role="tab" tabindex="0" @click="activeTabId = tab.id" @keydown.enter="activeTabId = tab.id"
+                                    :aria-selected="activeTabId === tab.id ? 'true' : 'false'"
                                     :class="activeTabId === tab.id ? 'bg-brand-400 text-white shadow-lg shadow-brand-200' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'"
-                                    class="px-4 py-2.5 rounded-2xl font-bold transition-all duration-300 flex items-center space-x-2 text-sm whitespace-nowrap group-hover:-translate-y-0.5">
+                                    class="px-4 py-2.5 rounded-2xl font-bold transition-all duration-300 flex items-center space-x-2 text-sm whitespace-nowrap cursor-pointer group-hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400">
                                     
-                                    <input type="text" x-model="tab.name" @input="saveData()" @click.stop 
+                                    <input type="text" aria-label="Nombre del producto" x-model="tab.name" @input="saveData()" @click.stop @keydown.stop
                                         class="bg-transparent outline-none w-auto max-w-[120px] sm:max-w-[150px] text-center placeholder-current transition-colors"
                                         :class="activeTabId === tab.id ? 'text-white' : 'text-slate-600'">
                                     
-                                    <span @click.stop="confirmDeleteTab(tab.id)" 
+                                    <span @click.stop="confirmDeleteTab(tab.id)" role="button" tabindex="0"
+                                        @keydown.enter.stop="confirmDeleteTab(tab.id)" aria-label="Eliminar producto"
                                         class="ml-1 w-6 h-6 flex items-center justify-center rounded-full transition cursor-pointer"
                                         :class="activeTabId === tab.id ? 'text-white/80 hover:bg-white/20 hover:text-white' : 'text-slate-300 hover:bg-rose-50 hover:text-rose-500'">
                                         <i class="fa-solid fa-trash-can text-[11px]"></i>
                                     </span>
-                                </button>
+                                </div>
                             </div>
                         </template>
                     </div>
@@ -245,6 +395,7 @@
                             <div class="flex items-center space-x-2 mb-1">
                                 <i class="fa-solid fa-kitchen-set text-amber-400 text-xs"></i>
                                 <span class="text-[10px] font-black uppercase tracking-widest text-amber-500">Usé en recetas</span>
+                                <i x-show="haySobreuso()" x-cloak class="fa-solid fa-triangle-exclamation text-amber-500 text-[10px] ml-auto" title="Usas más de lo que compraste"></i>
                             </div>
                             <div class="text-2xl font-black text-amber-600 tracking-tight" x-text="formatMoney(getTotalUsedCost())"></div>
                             <p class="text-[10px] font-bold text-slate-400 mt-1" x-text="getUsedPercent() + '% de lo que compré'"></p>
@@ -268,6 +419,12 @@
                             <p class="text-[10px] font-bold text-slate-400 mt-1">Si vendes todo</p>
                         </div>
                     </div>
+
+                    <p x-show="haySobreuso()" x-cloak
+                        class="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-amber-700 leading-relaxed flex items-start gap-2">
+                        <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                        <span>Estás usando más insumo del que compraste. Revisa las cantidades para que los números sean reales.</span>
+                    </p>
                 </div>
 
                 <!-- GRÁFICOS -->
@@ -290,13 +447,19 @@
                                 <canvas id="chartReparto"></canvas>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</span>
-                                    <strong class="text-lg font-black text-slate-700" x-text="formatMoney(getTotalSpent())"></strong>
+                                    <strong class="text-lg font-black text-slate-700" x-text="formatMoney(getTotalRepartido())"></strong>
                                 </div>
+                            </div>
+                            <div x-show="haySobreuso()" x-cloak class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-2.5 flex items-start gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 text-[10px]"></i>
+                                <p class="text-[10px] font-bold text-amber-700 leading-relaxed">
+                                    Usas más insumo del que compraste. Revisa las cantidades.
+                                </p>
                             </div>
                             <div class="mt-4 space-y-2">
                                 <div class="flex items-center justify-between text-xs font-bold">
                                     <span class="flex items-center gap-2 text-slate-500"><i class="w-2.5 h-2.5 rounded-full bg-amber-400"></i> Usado en recetas</span>
-                                    <span class="text-amber-500 font-black" x-text="formatMoney(getTotalUsedCost())"></span>
+                                    <span class="text-amber-500 font-black" x-text="formatMoney(getUsedForChart())"></span>
                                 </div>
                                 <div class="flex items-center justify-between text-xs font-bold">
                                     <span class="flex items-center gap-2 text-slate-500"><i class="w-2.5 h-2.5 rounded-full bg-emerald-400"></i> Te sobró</span>
@@ -335,7 +498,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
-                                <input type="number" min="1" x-model.number="tab.batchYield" @input="saveData()" class="w-24 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xl font-black text-brand-500 outline-none text-center focus:border-brand-300 focus:ring-2 focus:ring-brand-100 transition-all">
+                                <input type="number" min="1" aria-label="Unidades que salen de la receta" x-model.number="tab.batchYield" @input="saveData()" class="w-24 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xl font-black text-brand-500 outline-none text-center focus:border-brand-300 focus:ring-2 focus:ring-brand-100 transition-all">
                                 <span class="font-bold text-slate-500 pr-3">unidades</span>
                             </div>
                         </div>
@@ -371,13 +534,13 @@
                                                     </button>
                                                 </td>
                                                 <td class="p-3">
-                                                    <input type="text" x-model="ing.name" @input="saveData()" placeholder="Ej: Harina Selecta" class="compact-input">
+                                                    <input type="text" aria-label="Nombre del insumo" x-model="ing.name" @input="saveData()" placeholder="Ej: Harina Selecta" class="compact-input">
                                                 </td>
                                                 <td class="p-3">
-                                                    <input type="number" min="0" step="any" x-model.number="ing.boughtQty" @input="saveData()" placeholder="Ej: 1000" class="compact-input text-center">
+                                                    <input type="number" min="0" step="any" aria-label="Cantidad total comprada" x-model.number="ing.boughtQty" @input="saveData()" placeholder="Ej: 1000" class="compact-input text-center">
                                                 </td>
                                                 <td class="p-3">
-                                                    <select x-model="ing.unit" @change="saveData()" class="compact-input text-center cursor-pointer">
+                                                    <select aria-label="Unidad de medida" x-model="ing.unit" @change="saveData()" class="compact-input text-center cursor-pointer">
                                                         <option value="g">Gramos (g)</option>
                                                         <option value="kg">Kilos (kg)</option>
                                                         <option value="ml">Mililitros (ml)</option>
@@ -388,12 +551,12 @@
                                                 <td class="p-3">
                                                     <div class="relative">
                                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                                                        <input type="number" min="0" step="any" x-model.number="ing.totalCost" @input="saveData()" placeholder="0" class="compact-input pl-7 font-bold text-slate-700">
+                                                        <input type="number" min="0" step="any" aria-label="Lo que pagaste por el insumo" x-model.number="ing.totalCost" @input="saveData()" placeholder="0" class="compact-input pl-7 font-bold text-slate-700">
                                                     </div>
                                                 </td>
                                                 <td class="p-3 bg-brand-50/30">
                                                     <div class="flex items-center space-x-2">
-                                                        <input type="number" min="0" step="any" x-model.number="ing.usedQty" @input="saveData()" placeholder="0" class="compact-input text-center border-brand-200 focus:border-brand-400 bg-white">
+                                                        <input type="number" min="0" step="any" aria-label="Cantidad usada en la receta" x-model.number="ing.usedQty" @input="saveData()" placeholder="0" class="compact-input text-center border-brand-200 focus:border-brand-400 bg-white">
                                                         <span class="text-xs font-bold text-brand-400 w-6" x-text="ing.unit"></span>
                                                     </div>
                                                 </td>
@@ -481,7 +644,7 @@
                                 <div class="mb-5 bg-purple-50/60 border border-purple-100 rounded-2xl p-3 flex items-center gap-3">
                                     <i class="fa-solid fa-user-venus text-purple-400"></i>
                                     <label class="text-xs font-black text-purple-500 uppercase tracking-wide shrink-0">Vende</label>
-                                    <input type="text" x-model="tab.seller" @input="saveData()" placeholder="Ej: Keilyn"
+                                    <input type="text" aria-label="Quién vende este producto" x-model="tab.seller" @input="saveData()" placeholder="Ej: Keilyn"
                                         class="bg-white border border-purple-100 focus:border-purple-300 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700 outline-none flex-1 focus:ring-2 focus:ring-purple-100 transition-all">
                                 </div>
 
@@ -519,7 +682,7 @@
                                     <p class="text-sm text-slate-600 font-bold mb-3">¿A cuánto quieres vender cada unidad?</p>
                                     <div class="relative mb-3">
                                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-xl">$</span>
-                                        <input type="number" min="0" step="1" x-model.number="tab.customPrice" @input="syncMarginFromPrice(tab)"
+                                        <input type="number" min="0" step="1" aria-label="Precio de venta por unidad" x-model.number="tab.customPrice" @input="syncMarginFromPrice(tab)"
                                             placeholder="Ej: 2500" class="w-full bg-emerald-50/50 border-2 border-emerald-100 focus:border-emerald-400 focus:bg-white rounded-2xl py-3.5 pl-10 pr-4 text-3xl font-black text-emerald-700 outline-none text-center transition-all">
                                     </div>
                                     <p class="text-[11px] text-slate-400 font-medium text-center mb-4">Yo calculo sola cuánto ganas y qué porcentaje es. 💚</p>
@@ -641,30 +804,140 @@
                     action: null
                 },
 
+                // ===== SESIÓN =====
+                usuario: null,
+                cargandoSesion: true,
+                errorAuth: '',
+                iniciando: false,
+                errorConexion: '',
+                accesoDenegado: false,
+                accesoConcedido: false,
+                errorGuardado: '',
+                _listenerDatos: null,
+                _contadorId: 0,
+
+                get nombreCorto() {
+                    const n = (this.usuario && this.usuario.displayName) ? this.usuario.displayName.trim() : '';
+                    return n ? n.split(' ')[0] : '';
+                },
+
+                async iniciarSesion() {
+                    this.errorAuth = '';
+                    this.iniciando = true;
+                    try {
+                        await window.authSignIn(window.auth, window.authGoogle);
+                    } catch (e) {
+                        if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+                            this.errorAuth = 'No pudimos iniciar sesión. Revisa tu conexión e inténtalo otra vez.';
+                            console.error('Error al iniciar sesión:', e);
+                        }
+                    } finally {
+                        this.iniciando = false;
+                    }
+                },
+
+                cerrarSesion() {
+                    window.authSignOut(window.auth).catch(e => console.error(e));
+                },
+
+                // Si cierra la pestaña justo después de escribir, se guarda al tiro
                 initApp() {
-                    // Esperamos a que Firebase se inicialice en el módulo superior
-                    const checkFirebase = setInterval(() => {
-                        if (window.db && window.firebaseOnSnapshot) {
-                            clearInterval(checkFirebase);
+                    // En móvil es más fiable que beforeunload
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'hidden' && this._saveTimer) {
+                            clearTimeout(this._saveTimer);
+                            this.guardarAhora();
+                        }
+                    });
 
-                            // Escuchamos la base de datos de Firebase en tiempo real
-                            window.firebaseOnSnapshot(window.firebaseDoc(window.db, "usuarios", "mi_negocio"), (docSnap) => {
-                                const data = docSnap.exists() ? docSnap.data() : null;
-                                const estado = this.loadFromSnapshot(data);
+                    window.addEventListener('beforeunload', () => {
+                        if (this._saveTimer) {
+                            clearTimeout(this._saveTimer);
+                            this.guardarAhora();
+                        }
+                    });
 
-                                if (!this.activeTabId && this.tabs.length > 0) {
-                                    this.activeTabId = this.tabs[0].id;
-                                } else if (this.tabs.length === 0) {
-                                    this.activeTabId = null;
+                    // Si Firebase no carga (sin internet, CDN caído), no quedamos
+                    // pegados en "Abriendo tu negocio" para siempre
+                    this._watchdog = setTimeout(() => {
+                        if (this.cargandoSesion) {
+                            this.cargandoSesion = false;
+                            this.errorConexion = 'No pudimos conectar con Firebase. Revisa tu conexión a internet y recarga la página.';
+                        }
+                    }, 12000);
+
+                    // Esperamos a que Firebase esté listo
+                    const checkDb = setInterval(() => {
+                        if (window.db && window.auth && window.rtdbOnValue && window.authOnChange) {
+                            clearInterval(checkDb);
+                            clearTimeout(this._watchdog);
+
+                            // Revisamos si ya hay alguien conectado
+                            window.authOnChange(window.auth, (u) => {
+                                this.usuario = u;
+                                this.cargandoSesion = false;
+
+                                if (u) {
+                                    this.accesoDenegado = false;
+                                    this.accesoConcedido = false;
+                                    this.conectar();
+                                } else {
+                                    this.desconectar();
                                 }
-
-                                this.renderCharts();
-
-                                // Si venía del formato antiguo, reescribimos ordenadito
-                                if (estado === 'migrar') this.saveData();
                             });
                         }
                     }, 50);
+                },
+
+                conectar() {
+                    if (this._listenerDatos) return;   // ya estamos escuchando
+
+                    // Escuchamos en tiempo real: si tu prometida cambia algo, se ve al tiro.
+                    // Si Firebase nos niega el permiso, significa que la cuenta
+                    // no está en la lista de las REGLAS de la base.
+                    this._listenerDatos = window.rtdbOnValue(this.refNegocio(), (snapshot) => {
+                        this.accesoConcedido = true;
+                        this.accesoDenegado = false;
+                        this.errorConexion = '';
+
+                        const data = snapshot.val() || null;
+                        const estado = this.loadFromSnapshot(data);
+
+                        if (!this.activeTabId && this.tabs.length > 0) {
+                            this.activeTabId = this.tabs[0].id;
+                        } else if (this.tabs.length === 0) {
+                            this.activeTabId = null;
+                        }
+
+                        this.renderChartsSoon();
+
+                        // Si venía del formato antiguo, reescribimos ordenadito
+                        if (estado === 'migrar') this.saveData();
+                    }, (error) => {
+                        if (error && error.code === 'PERMISSION_DENIED') {
+                            this.accesoDenegado = true;
+                            this.accesoConcedido = false;
+                        } else {
+                            this.errorConexion = 'No pudimos leer tu negocio. Revisa tu conexión a internet.';
+                        }
+                        console.error('No se pudo leer la base de datos:', error);
+                    });
+                },
+
+                desconectar() {
+                    if (this._listenerDatos) {
+                        this._listenerDatos();   // onValue devuelve la función para desuscribirse
+                        this._listenerDatos = null;
+                    }
+                    this.tabs = [];
+                    this.activeTabId = null;
+                    this.accesoConcedido = false;
+                    this.destroyChart('reparto');
+                    this.destroyChart('precios');
+                },
+
+                refNegocio() {
+                    return window.rtdbRef(window.db, "negocios", "keilyn", "datos");
                 },
 
                 // ===== LECTURA DE FIREBASE =====
@@ -719,14 +992,19 @@
                     return 'ok';
                 },
 
-                // Convierte un nombre en una clave legible: "Empaná de pinocho" -> "empana-de-pinocho"
+                // Convierte un nombre en una clave segura y legible.
+                // "Empaná de pinocho" -> "empana-de-pinocho"
+                // Realtime Database prohíbe . # $ [ ] / y trata claves numéricas como listas
                 slugify(texto) {
-                    const base = String(texto || '')
+                    let base = String(texto || '')
                         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                         .toLowerCase()
                         .replace(/[^a-z0-9]+/g, '-')
                         .replace(/^-+|-+$/g, '');
-                    return base || 'producto';
+
+                    if (!base) base = 'producto';
+                    if (/^\d/.test(base)) base = 'producto-' + base;  // evita que sea índice de lista
+                    return base;
                 },
 
                 // ===== GUARDADO ORDENADO =====
@@ -748,7 +1026,7 @@
                         (tab.ingredients || []).forEach(ing => {
                             insumos[ing.id] = {
                                 id: ing.id,
-                                nombre: ing.name || '(sin nombre)',
+                                nombre: ing.name || '',
                                 unidad: ing.unit || 'g',
                                 cantidadComprada: this.num(ing.boughtQty),
                                 precioPagadoTotal: this.num(ing.totalCost),
@@ -804,17 +1082,40 @@
                     };
                 },
 
+                // Envía el documento a la base de datos
+                guardarAhora() {
+                    // Solo si hay alguien conectado
+                    if (!window.rtdbSet || !window.db || !this.usuario) return;
+                    try {
+                        const documento = this.buildDocument();
+                        return window.rtdbSet(this.refNegocio(), documento)
+                            .then(() => { this.errorGuardado = ''; })
+                            .catch((e) => {
+                                // Si la escritura falla, se lo decimos a la persona.
+                                // Nunca mostrar "guardado" cuando en realidad se perdió.
+                                this.errorGuardado = (e && e.code === 'PERMISSION_DENIED')
+                                    ? 'Tu cuenta no tiene permiso para guardar. Revisa las reglas de Firebase.'
+                                    : 'No pudimos guardar tus cambios. Revisa tu conexión a internet.';
+                                console.error('Error al guardar en Firebase:', e);
+                            });
+                    } catch (e) {
+                        this.errorGuardado = 'No pudimos guardar tus cambios.';
+                        console.error('No se pudo preparar el documento:', e);
+                    }
+                },
+
                 saveData() {
-                    // Guardamos en Firebase con un pequeño retraso para no saturar la base
+                    // Los gráficos se actualizan rápido para que se sienta inmediato
+                    this.renderChartsSoon();
+
+                    // El guardado real espera un momento, para no escribir por cada tecla
                     clearTimeout(this._saveTimer);
-                    this._saveTimer = setTimeout(() => {
-                        if (window.firebaseSetDoc && window.db) {
-                            const documento = this.buildDocument();
-                            window.firebaseSetDoc(window.firebaseDoc(window.db, "usuarios", "mi_negocio"), documento)
-                                .catch(e => console.error("Error al guardar en Firebase:", e));
-                        }
-                        this.renderCharts();
-                    }, 500);
+                    this._saveTimer = setTimeout(() => this.guardarAhora(), 500);
+                },
+
+                renderChartsSoon() {
+                    clearTimeout(this._chartTimer);
+                    this._chartTimer = setTimeout(() => this.renderCharts(), 180);
                 },
 
                 // Modal Functions
@@ -856,9 +1157,17 @@
                     this.saveData();
                 },
 
+                // Genera un id único. Date.now() solo puede repetirse si se hace clic
+                // dos veces en el mismo milisegundo, y eso duplicaría la clave en
+                // la base y haría perder un insumo al guardar.
+                nuevoId(prefijo) {
+                    this._contadorId = (this._contadorId || 0) + 1;
+                    return prefijo + '_' + Date.now() + '_' + this._contadorId;
+                },
+
                 // Additions
                 addTab() {
-                    const newId = 'tab_' + Date.now();
+                    const newId = this.nuevoId('tab');
                     this.tabs.push({
                         id: newId,
                         name: 'Nuevo Producto',
@@ -876,7 +1185,7 @@
 
                 addIngredient(tab) {
                     tab.ingredients.push({
-                        id: 'ing_' + Date.now(),
+                        id: this.nuevoId('ing'),
                         name: '',
                         boughtQty: null,
                         unit: 'g',
@@ -955,6 +1264,22 @@
                     return Math.max(0, this.getTotalSpent() - this.getTotalUsedCost());
                 },
 
+                // Para el gráfico: nunca puede sumar más que lo realmente gastado
+                getUsedForChart() {
+                    const gastado = this.getTotalSpent();
+                    const usado = this.getTotalUsedCost();
+                    return gastado > 0 ? Math.min(usado, gastado) : usado;
+                },
+
+                // True si se usaron más insumos de los que se compraron (dato mal entered)
+                haySobreuso() {
+                    return this.getTotalUsedCost() > this.getTotalSpent();
+                },
+
+                getTotalRepartido() {
+                    return this.getUsedForChart() + this.getTotalLeftover();
+                },
+
                 getUsedPercent() {
                     const spent = this.getTotalSpent();
                     if (spent <= 0) return 0;
@@ -981,18 +1306,16 @@
                     this.$nextTick(() => {
                         const c1 = document.getElementById('chartReparto');
                         const c2 = document.getElementById('chartPrecios');
-                        if (!c1) this.destroyChart('reparto');
-                        if (!c2) this.destroyChart('precios');
+                        const seVe = (c) => c && c.offsetParent !== null && c.clientWidth > 0;
 
-                        if (c1 && c1.offsetParent !== null) this.drawReparto(c1);
-                        else this.resizeChart('reparto');
-
-                        if (c2 && c2.offsetParent !== null) this.drawPrecios(c2);
-                        else this.resizeChart('precios');
+                        // Si no hay productos o la vista está oculta, destruimos los gráficos.
+                        // Se recrean solos cuando la vista vuelve a verse (con el tamaño correcto).
+                        seVe(c1) ? this.drawReparto(c1) : this.destroyChart('reparto');
+                        seVe(c2) ? this.drawPrecios(c2) : this.destroyChart('precios');
                     });
                 },
 
-                // Si el canvas fue reemplazado (borramos todos los productos), rehacemos el gráfico
+                // Si el canvas fue reemplazado (borramos todo y creamos de nuevo), rehacemos el gráfico
                 chartCanvasDistinto(clave, canvas) {
                     const inst = window.__charts[clave];
                     if (inst && inst.canvas !== canvas) {
@@ -1010,16 +1333,11 @@
                     }
                 },
 
-                resizeChart(clave) {
-                    const inst = window.__charts[clave];
-                    if (inst) inst.resize();
-                },
-
                 chartBaseOptions() {
                     return {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: { duration: 600, easing: 'easeOutQuart' },
+                        animation: { duration: 500, easing: 'easeOutQuart' },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
@@ -1030,7 +1348,7 @@
                                 bodyFont: { family: 'Quicksand', weight: '700' },
                                 displayColors: false,
                                 callbacks: {
-                                    label: (ctx) => this.formatMoney(ctx.parsed.y !== undefined && ctx.parsed.y !== null ? ctx.parsed.y : ctx.parsed)
+                                    label: (ctx) => `${ctx.dataset.label}: ${this.formatMoney(ctx.parsed.y ?? ctx.parsed)}`
                                 }
                             }
                         }
@@ -1038,7 +1356,7 @@
                 },
 
                 drawReparto(canvas) {
-                    const usado = this.getTotalUsedCost();
+                    const usado = this.getUsedForChart();
                     const sobrante = this.getTotalLeftover();
                     const total = usado + sobrante;
 
@@ -1057,7 +1375,7 @@
                     opciones.plugins.tooltip.callbacks.label = (ctx) => {
                         const v = ctx.parsed;
                         const pct = total > 0 ? Math.round((v / total) * 100) : 0;
-                        return `${this.formatMoney(v)} · ${pct}%`;
+                        return `${ctx.label}: ${this.formatMoney(v)} · ${pct}%`;
                     };
 
                     if (this.chartCanvasDistinto('reparto', canvas)) {
@@ -1074,16 +1392,23 @@
                 },
 
                 drawPrecios(canvas) {
-                    const etiquetas = this.tabs.map(t => (t.name || 'Producto').trim().slice(0, 14));
+                    const etiquetas = this.tabs.map(t => (t.name || 'Producto').trim());
                     const costos = this.tabs.map(t => Math.round(this.getCostPerItem(t)));
                     const precios = this.tabs.map(t => Math.round(this.getSuggestedPrice(t)));
+                    const muchos = etiquetas.length > 5;
 
                     const op = this.chartBaseOptions();
                     op.scales = {
                         x: {
                             grid: { display: false },
                             border: { display: false },
-                            ticks: { font: { family: 'Quicksand', weight: '700', size: 10 }, color: '#94A3B8', maxRotation: 0, autoSkip: false }
+                            ticks: {
+                                font: { family: 'Quicksand', weight: '700', size: 10 },
+                                color: '#94A3B8',
+                                maxRotation: muchos ? 40 : 0,
+                                minRotation: 0,
+                                autoSkip: false
+                            }
                         },
                         y: {
                             beginAtZero: true,
@@ -1093,6 +1418,7 @@
                                 font: { family: 'Quicksand', weight: '700', size: 10 },
                                 color: '#CBD5E1',
                                 padding: 8,
+                                maxTicksLimit: 5,
                                 callback: (v) => this.formatMoneyAxis(v)
                             }
                         }
@@ -1153,12 +1479,12 @@
                     return signo + '$' + conPuntos;
                 },
 
-                // Versión corta para ejes de gráficos (mantiene los puntos)
+                // Versión corta para ejes de gráficos (mantiene los puntos de miles)
                 formatMoneyAxis(v) {
-                    const n = Math.abs(v);
-                    if (n >= 1000000) return '$' + (v / 1000000).toFixed(1).replace('.', ',') + 'M';
-                    if (n >= 1000) return '$' + Math.round(v / 1000) + 'k';
-                    return '$' + Math.round(v);
+                    if (Math.abs(v) >= 1000000) {
+                        return '$' + (v / 1000000).toFixed(1).replace('.', ',') + 'M';
+                    }
+                    return this.formatMoney(v);
                 }
             }
         }
