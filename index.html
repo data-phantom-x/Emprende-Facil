@@ -261,12 +261,17 @@
             
             <div class="flex items-center gap-2 sm:gap-3">
                 <!-- Usuario conectado -->
-                <div x-show="accesoConcedido" x-cloak class="hidden md:flex items-center gap-2.5 bg-white/70 border border-slate-200/70 rounded-2xl pl-2.5 pr-3 py-1.5">
-                    <img :src="usuario.photoURL" :alt="'Foto de ' + usuario.displayName" referrerpolicy="no-referrer"
+                <div x-show="usuario" x-cloak class="hidden md:flex items-center gap-2.5 bg-white/70 border border-slate-200/70 rounded-2xl pl-2.5 pr-3 py-1.5">
+                    <img x-show="usuario && usuario.photoURL" :src="usuario ? usuario.photoURL : ''"
+                        :alt="usuario ? 'Foto de ' + usuario.displayName : ''" referrerpolicy="no-referrer"
                         class="w-8 h-8 rounded-full object-cover ring-2 ring-white">
+                    <!-- Respaldo si la cuenta no tiene foto -->
+                    <div x-show="!usuario || !usuario.photoURL"
+                        class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-300 to-pink-400 flex items-center justify-center text-white text-xs font-black ring-2 ring-white"
+                        x-text="nombreCorto ? nombreCorto.charAt(0).toUpperCase() : '?'"></div>
                     <div class="leading-tight">
-                        <p class="text-xs font-black text-slate-700 max-w-[130px] truncate" x-text="usuario.displayName"></p>
-                        <p class="text-[10px] font-bold text-slate-400" x-text="usuario.email"></p>
+                        <p class="text-xs font-black text-slate-700 max-w-[130px] truncate" x-text="usuario ? usuario.displayName : ''"></p>
+                        <p class="text-[10px] font-bold text-slate-400 truncate max-w-[130px]" x-text="usuario ? usuario.email : ''"></p>
                     </div>
                     <button type="button" @click="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión"
                         class="ml-1 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
@@ -821,16 +826,41 @@
                     return n ? n.split(' ')[0] : '';
                 },
 
+                // De dónde se está abriendo la web, para poder explicarle el error a la persona
+                origenActual() {
+                    try {
+                        const l = window.location || {};
+                        if (l.protocol === 'file:') return 'archivo local (file://)';
+                        return l.host || 'origen desconocido';
+                    } catch (e) {
+                        return 'origen desconocido';
+                    }
+                },
+
                 async iniciarSesion() {
                     this.errorAuth = '';
                     this.iniciando = true;
                     try {
                         await window.authSignIn(window.auth, window.authGoogle);
                     } catch (e) {
-                        if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+                        if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+                            // El usuario cerró la ventana: no es un error.
+                        } else if (e.code === 'auth/unauthorized-domain') {
+                            // Esta dirección todavía no está autorizada en Firebase.
+                            this.errorAuth = 'Firebase no reconoce esta dirección (' + this.origenActual() +
+                                             '). Hay que agregarla en Authentication → Configuración → Dominios autorizados.';
+                        } else if (e.code === 'auth/operation-not-allowed') {
+                            this.errorAuth = 'El login con Google está apagado en Firebase. ' +
+                                             'Actívalo en Authentication → Sign-in method → Google.';
+                        } else if (e.code === 'auth/popup-blocked') {
+                            this.errorAuth = 'Tu navegador bloqueó la ventana de Google. ' +
+                                             'Permite las ventanas emergentes para esta página e inténtalo otra vez.';
+                        } else if (e.code === 'auth/network-request-failed') {
+                            this.errorAuth = 'No hay conexión con internet. Revisa tu conexión e inténtalo otra vez.';
+                        } else {
                             this.errorAuth = 'No pudimos iniciar sesión. Revisa tu conexión e inténtalo otra vez.';
-                            console.error('Error al iniciar sesión:', e);
                         }
+                        console.error('Error al iniciar sesión:', e);
                     } finally {
                         this.iniciando = false;
                     }
