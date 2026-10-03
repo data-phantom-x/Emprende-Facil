@@ -168,23 +168,49 @@
            BOTONES  ·  .btn + un tamano + un tono
            Solo define lo visual. El HTML pone el layout con utilities.
            ===================================================================== */
+        /* TODO lo que se puede resolver aqui se resuelve aqui: el boton se
+           centra solo, tiene padding segun su tamano y trae sus estados
+           (hover / focus / disabled). En el HTML solo se escribe el LAYOUT
+           (w-full, flex-1, shrink-0, gap-2...) y jamas `rounded-xl text-white
+           transition-all` suelto, que es lo que hacia que un botón se viera
+           distinto de su vecino. */
         .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            vertical-align: middle;
             border-radius: var(--r-md);
             font-weight: 700;
+            line-height: 1.25;
             white-space: nowrap;
             text-align: center;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-medio) var(--curva),
                         color var(--t-medio) var(--curva),
                         border-color var(--t-medio) var(--curva),
                         box-shadow var(--t-medio) var(--curva),
                         transform var(--t-medio) var(--curva);
         }
-        .btn:focus-visible { outline: 2px solid #fda4af; outline-offset: 2px; }
+        /* Foco: dos anillos (halo claro + aro oscuro) para que se vea igual
+           sobre un boton blanco, sobre uno de color y sobre el fondo de la
+           pagina. Un solo anillo de color se perdia en los botones claros. */
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b;
+        }
 
         /* Tamano: sm para acciones de fila, md para la mayoria, lg para la llamada principal */
         .btn-sm { padding: 0.375rem 0.875rem; font-size: 0.8125rem; }
         .btn-md { padding: 0.625rem 1.25rem; font-size: 0.875rem; }
         .btn-lg { padding: 0.875rem 1.5rem;  font-size: 1rem; }
+        /* Boton cuadrado: el padding horizontal sobra cuando el ancho ya esta
+           fijo (los − y +, el modo oscuro del movil). Sin esto el contenido se
+           sale de la caja, porque el padding lateral suma mas que el ancho. */
+        .btn-square { padding-left: 0; padding-right: 0; }
 
         /* Tonos */
         .btn-brand   { background-color: #fb7185; color: #fff; box-shadow: var(--s-3); }
@@ -206,16 +232,92 @@
         }
         .btn-ghost:hover { background-color: #e2e8f0; color: #1e293b; }
 
+        /* ── TONOS SUAVES ──────────────────────────────────────────────────────
+           Para las acciones secundarias que NO son la llamada principal.
+           Antes cada una escribia sus propios colores en el HTML y quedaban
+           distintas entre si (y en oscuro, algunas quedaban con texto blanco
+           sobre un gris claro: ilegibles). */
+        /* Gris: el estado "apagado" de un interruptor grande (Inactivo) */
+        .btn-neutral { background-color: #e2e8f0; color: #475569; }
+        .btn-neutral:hover { background-color: #cbd5e1; color: #1e293b; transform: translateY(-1px); }
+        /* Contorno: la opcion sin elegir de un grupo (margen 30 / 50 / 70...) */
+        .btn-outline {
+            background-color: #fff; color: #64748b;
+            border: 1px solid #e2e8f0; box-shadow: var(--s-1);
+        }
+        .btn-outline:hover { background-color: #f8fafc; color: #334155; border-color: #cbd5e1; transform: translateY(-1px); }
+        /* Rosa lavado */
+        .btn-brand-soft {
+            background-color: #fff1f2; color: #be123c;
+            border: 1px solid #fecdd3;
+        }
+        .btn-brand-soft:hover { background-color: #ffe4e6; color: #9f1239; border-color: #fda4af; transform: translateY(-1px); }
+        /* Ambar lavado */
+        .btn-amber-soft {
+            background-color: #fffbeb; color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        .btn-amber-soft:hover { background-color: #fef3c7; color: #92400e; border-color: #fbbf24; transform: translateY(-1px); }
+        /* Boton rayado: el que AGREGA algo a una lista.
+           El texto va en rose-700 (#be123c, 6.3:1) y no en rose-500 (3.7:1). */
+        .btn-dashed {
+            background-color: #fff; color: #be123c;
+            border: 2px dashed #fecdd3;
+        }
+        .btn-dashed:hover {
+            background-color: #e11d48; color: #fff;
+            border-color: #e11d48;
+            transform: translateY(-1px);
+        }
+        /* Boton apagado: lo que ya no se puede hacer (Agotado) */
+        .btn-off {
+            background-color: #e2e8f0; color: #475569;
+            border: 1px solid transparent;
+            box-shadow: none;
+        }
+
+        /* ── DESHABILITADO ────────────────────────────────────────────────────
+           Un boton :disabled SEGUIE cumpliendo :hover (no es :not(:hover) en CSS).
+           Por eso el hover va en la misma regla: si no, el boton deshabilitado
+           seguia levantandose y tomando color mientras no se podia usar. */
+        .btn:disabled,
+        .btn:disabled:hover {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            filter: saturate(0.6);
+        }
+
         /* Boton de solo icono (cuadrito) */
         .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border-radius: var(--r-xs);
             font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-rapido) var(--curva),
                         color var(--t-rapido) var(--curva);
         }
         .btn-icon:hover { background-color: #f1f5f9; color: #475569; }
         .btn-icon.danger:hover { background-color: #fff1f2; color: #f43f5e; }
         .btn-icon.sun:hover    { background-color: #fffbeb; color: #f59e0b; }
+        /* Confirmado recien: el check verde de "Copiado" */
+        .btn-icon-ok, .btn-icon-ok:hover { background-color: #d1fae5; color: #047857; }
+        /* Boton de icono SOBRE un boton de color (la papelera de la pestana
+           activa): el fondo del hover tiene que ser blanco translucido, no el
+           gris del .btn-icon, que en rosa no se ve. */
+        .btn-icon-on-color { color: rgba(255, 255, 255, 0.8); }
+        .btn-icon-on-color:hover { background-color: rgba(255, 255, 255, 0.22); color: #fff; }
+        .btn-icon:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
+        .btn-icon:disabled,
+        .btn-icon:disabled:hover { opacity: 0.4; cursor: not-allowed; background-color: transparent; }
 
         /* Boton de estado (pendiente/listo/entregado/pagado) */
         .btn-amber  { background-color: #f59e0b; color: #fff; box-shadow: var(--s-3); }
@@ -223,21 +325,126 @@
         .btn-blue   { background-color: #3b82f6; color: #fff; box-shadow: var(--s-3); }
         .btn-blue:hover   { background-color: #2563eb; transform: translateY(-1px); }
 
-        /* ── PILDORA de navegacion ─────────────────────────────────────────── */
+        /* ---------------------------------------------------------------------
+           CONTRSTE DE LOS BOTONES DE COLOR EN MODO CLARO  ·  decision consciente
+
+           Los botones "de color" usan el pastel de la marca. Medidos con texto
+           blanco (WCAG 2.1), en MODO CLARO:
+
+               btn-amber / btn-warn   #f59e0b   2.2:1   <- falla
+               btn-ok                 #10b981   2.5:1   <- falla
+               btn-brand              #fb7185   2.7:1   <- falla
+               btn-danger             #f43f5e   3.7:1   <- falla
+               btn-blue               #3b82f6   3.7:1   <- falla
+               btn-violet             #8b5cf6   4.2:1   <- falla
+
+           O sea: en claro TODOS quedan bajo el 4.5:1 que pide WCAG AA para
+           texto normal, porque el rosa/verde/ambar de la marca esta pensado
+           para ser un fondo suave, no un relleno de boton.
+
+           Se deja asi a proposito: es la identidad visual de la app y
+           oscurecerlos todos seria un cambio de cara que no se decide aqui.
+           En MODO OSCURO ya no hay problema: ahi los tonos se oscurecen
+           automaticamente (ver `--o-boton-*`) y todos llegan a 4.7:1 o mas.
+
+           Para cambiar a la version accesible en claro, alcanza con descomentar
+           el bloque de 6 lineas que sigue. Con eso los seis botones pasan a
+           4.7:1 o mas sin tocar ni el HTML ni el modo oscuro.
+           --------------------------------------------------------------------- */
+        /*
+        .btn-brand  { background-color: #e11d48; }  .btn-brand:hover  { background-color: #be123c; }
+        .btn-ok     { background-color: #047857; }  .btn-ok:hover     { background-color: #065f46; }
+        .btn-warn   { background-color: #b45309; }  .btn-warn:hover   { background-color: #92400e; }
+        .btn-danger { background-color: #e11d48; }  .btn-danger:hover { background-color: #be123c; }
+        .btn-violet { background-color: #7c3aed; }  .btn-violet:hover { background-color: #6d28d9; }
+        .btn-blue   { background-color: #2563eb; }  .btn-blue:hover   { background-color: #1d4ed8; }
+        .btn-amber  { background-color: #b45309; }  .btn-amber:hover  { background-color: #92400e; }
+        */
+
+        /* ── PILDORA de navegacion ─────────────────────────────────────────────
+           El padding vive aqui: los <span> "hidden sm:inline" hacen que el
+           ancho cambie entre movil y escritorio, y con el padding puesto en el
+           HTML el grupo se descuadraba al cambiar de tamano de pantalla. */
         .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
             border-radius: var(--r-sm);
             font-weight: 600;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-medio) var(--curva),
                         color var(--t-medio) var(--curva),
                         box-shadow var(--t-medio) var(--curva);
         }
         .pill-on { background-color: #fff; box-shadow: var(--s-1); font-weight: 800; }
+        /* La pildora apagada tambien responde al mouse: antes no daba ninguna
+           pista de que se podia tocar. */
+        .pill:not(.pill-on):hover { background-color: #e2e8f0; }
+        .pill:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
 
-        /* ── SEGMENTADO: los botones de seccion (14 en total) ──────────────── */
+        /* Contador redondito dentro de una pildora (pedidos pendientes).
+           Antes cada uno escribia sus propios `rounded-full text-[10px] px-1.5
+           py-0.5`, asi que el numero era mas o menos redondo segun el panel.
+           El verde es el 600 y no el 500: con el 500 el numero blanco queda en
+           2.5:1 y es un 12px, o sea ilegible. */
+        .badge-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.125rem;
+            height: 1.125rem;
+            padding: 0 0.3125rem;
+            border-radius: 9999px;
+            background-color: #047857;
+            color: #fff;
+            font-size: 0.625rem;
+            font-weight: 900;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        /* Aviso pegado a la esquina de la pildora (pago pendiente).
+           Fondo ambar vivo + TINTA oscura (6.9:1): al revés, el blanco sobre
+           ambar daba 2.1:1 y era el numero que avisaba de una deuda. */
+        .pill-alert {
+            position: absolute;
+            top: -0.375rem;
+            right: -0.375rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.125rem;
+            height: 1.125rem;
+            padding: 0 0.3125rem;
+            border-radius: 9999px;
+            background-color: #f59e0b;
+            color: #451a03;
+            font-size: 0.625rem;
+            font-weight: 900;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            /* El aro toma el color de la barra donde vive la pildora, no el
+               de la pagina: en oscuro el aro blanco recortaba el numero. */
+            box-shadow: 0 0 0 2px var(--o-pill-fondo, #ffffff),
+                        0 2px 6px -1px rgba(15, 23, 42, 0.25);
+        }
+
+        /* ── SEGMENTADO: los botones de seccion ───────────────────────────────
+           El padding tambien va aqui. Sin el, el cuadrito de color y el texto
+           se pegaban al borde de la caja. */
         .seg {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.75rem 0.5rem;
+            width: 100%;
             border-radius: var(--r-md);
             border: 1px solid #e2e8f0;
             background-color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-medio) var(--curva),
                         border-color var(--t-medio) var(--curva),
                         box-shadow var(--t-medio) var(--curva),
@@ -250,43 +457,87 @@
             box-shadow: var(--s-1);
         }
         .seg-on:hover { background-color: #fff; transform: none; }
+        .seg:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
+        /* Las dos lineas de texto del boton de seccion. Antes cada boton
+           repetia `text-[11px] font-black ... text-slate-800/500`, o sea nueve
+           oportunidades de que una se quedara con el tamano o el color erroneo. */
+        .seg-t { font-size: 0.6875rem; font-weight: 900; line-height: 1.25; text-align: center; }
+        .seg-t-on { color: #1e293b; }
+        .seg-t-off { color: #64748b; }
+        .seg-sub { font-size: 0.5625rem; font-weight: 700; line-height: 1.25; text-align: center; color: #64748b; }
 
         /* ── SEGMENTADO pequeno (porcentaje / mi propio precio) ─────────────── */
         .seg2 {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0.75rem;
             border-radius: var(--r-sm);
             font-weight: 700;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-rapido) var(--curva),
                         color var(--t-rapido) var(--curva),
                         box-shadow var(--t-rapido) var(--curva);
         }
         .seg2-on { background-color: #fff; box-shadow: var(--s-1); font-weight: 900; }
+        .seg2:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
+        /* La caja que agrupa los .seg2 (porcentaje / mi propio precio) */
+        .seg-group {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--r-sm);
+            background-color: #f1f5f9;
+        }
 
         /* ── FILA que se puede clickear (ver todos, acordeones) ─────────────── */
         .row-card {
             border-radius: var(--r-lg);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-medio) var(--curva),
                         box-shadow var(--t-medio) var(--curva),
                         transform var(--t-medio) var(--curva);
         }
         .row-card:hover { box-shadow: var(--s-1); transform: translateY(-2px); }
+        .row-card:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
 
         /* ── TARJETA de indicador (los 4 numeros del filtro de pedidos) ─────── */
         .stat {
             border-radius: var(--r-lg);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             transition: box-shadow var(--t-medio) var(--curva),
                         transform var(--t-medio) var(--curva);
         }
         .stat:hover { box-shadow: var(--s-1); transform: translateY(-2px); }
+        .stat:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
 
-        /* ── INTERRUPTOR (publicar, controlar stock) ───────────────────────── */
+        /* ── INTERRUPTOR (controlar stock) ────────────────────────────────────
+           Sin padding aqui el boton se cerraba sobre el icono y quedaba con
+           un area de clic diminuta. */
         .toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.875rem;
             border-radius: var(--r-sm);
             font-weight: 700;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             transition: background-color var(--t-medio) var(--curva),
-                        color var(--t-medio) var(--curva);
+                        color var(--t-medio) var(--curva),
+                        border-color var(--t-medio) var(--curva),
+                        box-shadow var(--t-medio) var(--curva);
         }
-        .toggle-on  { background-color: #d1fae5; color: #047857; }
-        .toggle-off { background-color: #e2e8f0; color: #475569; }
+        .toggle-on  { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+        .toggle-off { background-color: #e2e8f0; color: #475569; border: 1px solid #e2e8f0; }
+        .toggle-on:hover  { background-color: #a7f3d0; color: #065f46; }
+        .toggle-off:hover { background-color: #cbd5e1; color: #1e293b; }
+        .toggle:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1e293b; }
 
         /* ── INSIGNIAS: mismo tamano en todo el app ────────────────────────── */
         .badge {
@@ -313,7 +564,12 @@
         .badge-outline-amber { background-color: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
         .badge-outline-rose  { background-color: #fff1f2; border: 1px solid #fecdd3; color: #be123c; }
 
-        /* ── ICONO redondo grande (estados vacios) ───────────────────────── */
+        /* ── ICONO redondo grande (estados vacios) ──────────────────────────────
+           El tamaño va AQUI y no en el HTML. Antes cada estado vacio se
+           inventaba su medida con utilities (w-24 h-24 text-4xl, o w-16
+           h-16 text-2xl...) y como las utilities ganan a esta clase, el
+           circulo grande quedaba con el icono pequeno: se veian tres
+           estados vacios distintos en la misma app. */
         .empty-ico {
             border-radius: 9999px;
             display: flex; align-items: center; justify-content: center;
@@ -322,6 +578,11 @@
             font-size: 3rem;
             background-color: #f1f5f9; color: #cbd5e1;
         }
+        /* Medidas: sm para el aviso que va dentro de una caja, md para los
+           avisos de pantalla y lg para el que encabeza una pantalla de login */
+        .empty-ico-sm { width: 4rem; height: 4rem; font-size: 1.5rem; }
+        .empty-ico-md { width: 6rem; height: 6rem; font-size: 2.25rem; }
+        .empty-ico-lg { width: 7.5rem; height: 7.5rem; font-size: 2.5rem; }
         /* ── Icono de modal: circulo de 3.5rem ─────────────────────────────── */
         /* Radio extra: modales y pantallas completas (2rem) */
         .r-modal { border-radius: var(--r-xl); }
@@ -494,15 +755,17 @@
         .animate-bounce-soft { animation: gentle-bounce 2.4s var(--curva) infinite; }
 
         /* Boton "Mis pedidos" con pagos pendientes: late hasta que se paga.
-           Los fondos salen de variables para que el pulso tambien funcione en
-           oscuro (antes pintaban #fef3c7 fijo y parpadeaban en amarillo claro). */
+           TODO el color sale de variables (--alerta-*), porque el pico estaba
+           en `rgba(245,158,11,0.32)`: sobre un fondo claro eso es ambar al
+           32%, o sea casi el mismo crema de antes. En modo claro el aviso mas
+           urgente de la app era el unico que no se veia. */
         @keyframes alerta-pago {
-            0%, 100% { background-color: var(--alerta-fondo);  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-            50%      { background-color: var(--alerta-fondo-2); box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.18); }
+            0%, 100% { background-color: var(--alerta-fondo);  box-shadow: 0 0 0 0 transparent; }
+            50%      { background-color: var(--alerta-fondo-2); box-shadow: 0 0 0 5px var(--alerta-anillo); }
         }
         @keyframes alerta-pago-alerta {
-            0%, 100% { background-color: var(--alerta-fondo-2); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-            50%      { background-color: rgba(245, 158, 11, 0.32); box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.30); }
+            0%, 100% { background-color: var(--alerta-fondo-2); box-shadow: 0 0 0 0 transparent; }
+            50%      { background-color: var(--alerta-pico); box-shadow: 0 0 0 7px var(--alerta-anillo); }
         }
         .animate-pulse-alerta        { animation: alerta-pago 1.6s var(--curva) infinite; }
         .animate-pulse-alerta-alerta { animation: alerta-pago-alerta 1.2s var(--curva) infinite; }
@@ -556,6 +819,8 @@
         :root {
             --alerta-fondo: #fffbeb;
             --alerta-fondo-2: #fef3c7;
+            --alerta-pico: #fde68a;          /* el punto mas fuerte del pulso */
+            --alerta-anillo: rgba(245, 158, 11, 0.28);
         }
 
         html.dark {
@@ -603,6 +868,12 @@
             /* Aviso del boton "Mis pedidos" sin pagar (ver keyframes) */
             --alerta-fondo: rgba(245, 158, 11, 0.16);
             --alerta-fondo-2: rgba(245, 158, 11, 0.26);
+            --alerta-pico: rgba(245, 158, 11, 0.34);
+            --alerta-anillo: rgba(245, 158, 11, 0.22);
+
+            /* Fondo de la barra donde viven las pildoras: el aro del contador
+               y del aviso se cortan con este color y no con blanco. */
+            --o-pill-fondo: rgba(30, 42, 66, 0.85);
         }
 
         /* FONDO DE PAGINA, TARJETAS Y SUPERFICIES */
@@ -713,6 +984,10 @@ html.dark .text-amber-600 { color: #fcd34d; }
 html.dark .text-amber-700 { color: #fde68a; }
 html.dark .text-amber-700\/70 { color: rgba(253, 230, 138, 0.75); }
 html.dark .text-amber-700\/80 { color: rgba(253, 230, 138, 0.85); }
+/* La pildora "Mis pedidos" late en ambar: en claro usa amber-800 (mas
+   oscuro, para que el texto aguante el fondo del pulso) y en oscuro sube a
+   un ambar claro, porque el fondo del pulso tambien es translucido. */
+html.dark .text-amber-800 { color: #fcd34d; }
 html.dark .text-amber-900 { color: #fef3c7; }
 
 html.dark .text-emerald-400 { color: #34d399; }
@@ -924,23 +1199,82 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
     html.dark .btn-ghost { background-color: var(--o-chip); color: var(--o-texto-2); }
     html.dark .btn-ghost:hover { background-color: var(--o-chip-2); color: var(--o-titulo); }
 
+    /* Tonos suaves: en oscuro el fondo sube de tono y el texto tambien, para
+       que el contraste se mantenga (el texto se aclara, nunca se deja en #64748b
+       sobre un fondo claro). */
+    html.dark .btn-neutral { background-color: var(--o-chip-2); color: var(--o-texto); }
+    html.dark .btn-neutral:hover { background-color: #2b3855; color: var(--o-titulo); }
+    html.dark .btn-outline {
+        background-color: var(--o-tarjeta); color: var(--o-texto-2);
+        border-color: var(--o-borde-2); box-shadow: none;
+    }
+    html.dark .btn-outline:hover { background-color: var(--o-chip); color: var(--o-titulo); border-color: var(--o-borde-3); }
+    html.dark .btn-brand-soft {
+        background-color: rgba(244, 63, 94, 0.14); color: #fda4af;
+        border-color: rgba(244, 63, 94, 0.3);
+    }
+    html.dark .btn-brand-soft:hover { background-color: rgba(244, 63, 94, 0.22); color: #fecdd3; border-color: rgba(244, 63, 94, 0.45); }
+    html.dark .btn-amber-soft {
+        background-color: rgba(245, 158, 11, 0.14); color: #fbbf24;
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+    html.dark .btn-amber-soft:hover { background-color: rgba(245, 158, 11, 0.22); color: #fcd34d; border-color: rgba(245, 158, 11, 0.45); }
+    html.dark .btn-dashed {
+        background-color: var(--o-tarjeta); color: #fb7185;
+        border-color: rgba(244, 63, 94, 0.4);
+    }
+    html.dark .btn-dashed:hover { background-color: var(--o-boton-brand); color: #fff; border-color: var(--o-boton-brand); }
+    html.dark .btn-off { background-color: var(--o-chip); color: var(--o-texto-4); border-color: transparent; }
+
+    /* El boton apagado (Agotado) es el que mas se pisa con la sombra: sin
+       esto seguia flotando en oscuro y parecia que se podia tocar. */
+    html.dark .btn:disabled,
+    html.dark .btn:disabled:hover { opacity: 0.5; }
+
+    /* Foco en oscuro: el halo oscuro separa el aro claro del fondo, al reves
+       que en claro. Sin esto el aro claro se perdia sobre las tarjetas. */
+    html.dark .btn:focus-visible,
+    html.dark .btn-icon:focus-visible,
+    html.dark .pill:focus-visible,
+    html.dark .seg:focus-visible,
+    html.dark .seg2:focus-visible,
+    html.dark .toggle:focus-visible,
+    html.dark .row-card:focus-visible,
+    html.dark .stat:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--o-pagina), 0 0 0 4px #f8fafc;
+    }
+
     html.dark .btn-icon:hover { background-color: var(--o-chip); color: var(--o-texto); }
     html.dark .btn-icon.danger:hover { background-color: rgba(244, 63, 94, 0.16); color: #fb7185; }
     html.dark .btn-icon.sun:hover    { background-color: rgba(245, 158, 11, 0.16); color: #fbbf24; }
-    html.dark .btn-icon.on-color:hover { background-color: rgba(255, 255, 255, 0.18); color: #fff; }
+    /* .btn-icon-on-color usa blanco translucido en los dos temas: el boton
+       de color sobre el que se apoya tambien es el mismo en oscuro. */
 
     /* ── pildoras y segmentado ── */
     html.dark .pill-on { background-color: var(--o-tarjeta); box-shadow: var(--o-sombra-1); }
+    html.dark .pill:not(.pill-on):hover { background-color: var(--o-chip-2); }
+    html.dark .pill-alert { background-color: var(--o-boton-ambar); color: #fff; }
+    html.dark .badge-count { background-color: var(--o-boton-verde); }
     html.dark .seg { border-color: var(--o-borde); background-color: rgba(21, 30, 51, 0.72); }
     html.dark .seg:hover { background-color: var(--o-tarjeta); }
-    html.dark .seg-on { background-color: var(--o-tarjeta); }
+    html.dark .seg-on { background-color: var(--o-tarjeta); border-color: transparent; }
+    html.dark .seg-t-on { color: var(--o-titulo); }
+    html.dark .seg-t-off { color: var(--o-texto-2); }
+    html.dark .seg-sub { color: var(--o-texto-4); }
     html.dark .seg2-on { background-color: var(--o-tarjeta); }
+    html.dark .seg-group { background-color: var(--o-hueco); }
 
     /* ── filas y tarjetas ── */
     html.dark .row-card:hover, html.dark .stat:hover { box-shadow: var(--o-sombra-2); }
     html.dark .card { background-color: var(--o-tarjeta); border-color: var(--o-borde); box-shadow: var(--o-sombra-2); }
-    html.dark .toggle-on  { background-color: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
-    html.dark .toggle-off { background-color: var(--o-chip); color: var(--o-texto-3); }
+    html.dark .toggle-on  { background-color: rgba(16, 185, 129, 0.18); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.34); }
+    html.dark .toggle-off { background-color: var(--o-chip); color: var(--o-texto-3); border-color: var(--o-borde-2); }
+    html.dark .toggle-on:hover  { background-color: rgba(16, 185, 129, 0.28); color: #a7f3d0; }
+    html.dark .toggle-off:hover { background-color: var(--o-chip-2); color: var(--o-texto); }
+
+    /* El check de "Copiado" */
+    html.dark .btn-icon-ok, html.dark .btn-icon-ok:hover { background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
 
     /* ── chips de icono ── */
     html.dark .ico-slate   { background-color: var(--o-chip); color: var(--o-texto-2); }
@@ -1009,7 +1343,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
     /* ── listas y anillos dentro de los componentes ── */
     html.dark select option { background-color: var(--o-tarjeta); color: var(--o-titulo); }
-    html.dark .btn:focus-visible { outline-color: #fb7185; }
+    /* El anillo de foco de los botones ya se resuelve en el bloque de arriba
+       (halo oscuro + aro claro), asi que aqui no hay nada que redefinir. */
 
 /* El pulso de "Mis pedidos" (pagos pendientes) esta definido mas arriba,
            junto a las demas animaciones: usa variables para que tambien funcione
@@ -1036,7 +1371,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     </div>
                 </div>
 
-                <div x-show="errorConexion" class="empty-ico r-modal w-24 h-24 mx-auto mb-6 text-4xl bg-rose-100 text-rose-400"><i class="fa-solid fa-wifi text-4xl"></i>
+                <div x-show="errorConexion" class="empty-ico empty-ico-lg mb-6 bg-rose-100 text-rose-400"><i class="fa-solid fa-wifi"></i>
                 </div>
 
                 <h1 class="text-3xl font-black text-slate-800 mb-2"   x-text="errorConexion ? 'Sin conexión' : 'El Negocio de Keilyn'"></h1>
@@ -1044,7 +1379,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
                 <div x-show="!errorConexion">
                     <button @click="iniciarSesion()" :disabled="iniciando" type="button"
-                        class="w-full btn btn-lg border-2 border-slate-200 bg-white text-slate-700 hover:border-slate-300 disabled:opacity-60 disabled:cursor-wait"><svg class="w-5 h-5"   viewBox="0 0 24 24" aria-hidden="true">
+                        class="btn btn-lg w-full border-2 border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"><svg class="w-5 h-5 shrink-0"   viewBox="0 0 24 24" aria-hidden="true">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.65l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
                             <path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z"/>
@@ -1060,7 +1395,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                 </div>
 
                 <button type="button" x-show="errorConexion" @click="location.reload()"
-                    class="w-full btn btn-lg btn-brand"><i class="fa-solid fa-rotate"></i>
+                    class="btn btn-lg btn-brand w-full"><i class="fa-solid fa-rotate"></i>
                     <span>Reintentar</span>
                 </button>
             </div>
@@ -1077,14 +1412,15 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             </div>
             <h3 class="text-2xl font-extrabold text-slate-800 mb-2"   x-text="modal.title"></h3>
             <p class="text-slate-500 mb-8 font-medium leading-relaxed"   x-text="modal.message"></p>
-            <div class="flex space-x-3"><button type="button" @click="closeModal()" class="flex-1 btn btn-md btn-ghost"> Volver</button>
-                <button type="button" @click="executeModalAction()" class="flex-1 btn btn-md btn-brand"> Sí, seguro</button>
+            <div class="flex gap-3"><button type="button" @click="closeModal()" class="btn btn-md btn-ghost flex-1"> Volver</button>
+                <button type="button" @click="executeModalAction()" x-ref="modalConfirm"
+                    class="btn btn-md btn-danger flex-1"   x-text="modal.confirmText || 'Sí, seguro'"></button>
             </div>
         </div>
     </div>
 
     <header class="glass-panel sticky top-0 z-40 border-b border-brand-50 shadow-sm"   x-show="usuario" x-cloak>
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between"><div class="flex items-center space-x-3"><div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-300 to-pink-400 flex items-center justify-center text-white shadow-lg shadow-pink-200 animate-float"><i class="fa-solid fa-store text-lg sm:text-xl"></i>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between"><div class="flex items-center space-x-3"><div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-300 to-pink-400 flex items-center justify-center text-white shadow-lg shadow-pink-200 animate-float shrink-0"><i class="fa-solid fa-store text-lg sm:text-xl"></i>
                 </div>
                 <div>
                     <h1 class="text-lg sm:text-2xl font-black text-slate-800 tracking-tight"> El Negocio de Keilyn <span class="text-brand-400"> ✨</span></h1>
@@ -1103,31 +1439,35 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     <button type="button" @click="alternarModoOscuro()"
                         :aria-label="modoOscuro ? 'Usar modo claro' : 'Usar modo oscuro'"
                         :title="modoOscuro ? 'Modo claro' : 'Modo oscuro'"
-                        class="btn-icon sun ml-1 w-7 h-7 text-slate-400 flex items-center justify-center"><i class="fa-solid"   :class="modoOscuro ? 'fa-sun' : 'fa-moon'"></i>
+                        class="btn-icon sun ml-1 w-8 h-8 text-slate-400"><i class="fa-solid"   :class="modoOscuro ? 'fa-sun' : 'fa-moon'"></i>
                     </button>
                     <button type="button" @click="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión"
-                        class="btn-icon danger ml-1 w-7 h-7 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        class="btn-icon danger ml-1 w-8 h-8 text-slate-300"><i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
                     </button>
                 </div>
 
-                <div class="flex space-x-2 bg-slate-100/80 p-1 rounded-2xl backdrop-blur-md border border-slate-200/50 overflow-x-auto hide-scrollbar"><!-- Panel del negocio: solo Keilyn y su prometida -->
+                <div class="flex gap-2 bg-slate-100/80 p-1 rounded-2xl backdrop-blur-md border border-slate-200/50 overflow-x-auto hide-scrollbar"><!-- Panel del negocio: solo Keilyn y su prometida -->
                     <template x-if="esDueno">
-                        <div class="flex space-x-2"><button type="button" @click="irA('productos')"
-                                :class="currentView === 'productos' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-box-open"></i>
+                        <div class="flex gap-2"><button type="button" @click="irA('productos')"
+                                :aria-current="currentView === 'productos' ? 'page' : null"
+                                :class="currentView === 'productos' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill text-sm whitespace-nowrap"><i class="fa-solid fa-box-open"></i>
                                 <span class="hidden sm:inline"> Mis Productos</span>
                             </button>
                             <button type="button" @click="irA('pedidos')"
-                                :class="currentView === 'pedidos' ? 'pill-on text-emerald-600' : 'text-slate-500 hover:text-slate-700'"   class="pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-receipt"></i>
+                                :aria-current="currentView === 'pedidos' ? 'page' : null"
+                                :class="currentView === 'pedidos' ? 'pill-on text-emerald-600' : 'text-slate-500 hover:text-slate-700'"   class="pill text-sm whitespace-nowrap"><i class="fa-solid fa-receipt"></i>
                                 <span class="hidden sm:inline"> Pedidos</span>
                                 <span x-show="pedidosPendientes() > 0"
-                                    class="bg-emerald-500 text-white text-[10px] font-black rounded-full px-1.5 py-0.5"   x-text="pedidosPendientes()"></span>
+                                    class="badge-count"   x-text="pedidosPendientes()"></span>
                             </button>
                             <button type="button" @click="irA('academia')"
-                                :class="currentView === 'academia' ? 'pill-on text-violet-500' : 'text-slate-500 hover:text-slate-700'"   class="pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-graduation-cap"></i>
+                                :aria-current="currentView === 'academia' ? 'page' : null"
+                                :class="currentView === 'academia' ? 'pill-on text-violet-500' : 'text-slate-500 hover:text-slate-700'"   class="pill text-sm whitespace-nowrap"><i class="fa-solid fa-graduation-cap"></i>
                                 <span class="hidden sm:inline"> Academia</span>
                             </button>
                             <button type="button" @click="irA('editar-pagos')"
-                                :class="currentView === 'editar-pagos' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-credit-card"></i>
+                                :aria-current="currentView === 'editar-pagos' ? 'page' : null"
+                                :class="currentView === 'editar-pagos' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill text-sm whitespace-nowrap"><i class="fa-solid fa-credit-card"></i>
                                 <span class="hidden sm:inline"> Datos de pago</span>
                             </button>
                         </div>
@@ -1135,19 +1475,22 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
                     <!-- Compradores -->
                     <template x-if="!esDueno">
-                        <div class="flex space-x-2"><button type="button" @click="irA('tienda')"
-                                :class="currentView === 'tienda' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-store"></i>
+                        <div class="flex gap-2"><button type="button" @click="irA('tienda')"
+                                :aria-current="currentView === 'tienda' ? 'page' : null"
+                                :class="currentView === 'tienda' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill text-sm whitespace-nowrap"><i class="fa-solid fa-store"></i>
                                 <span class="hidden sm:inline"> Tienda</span>
                             </button>
                             <button type="button" @click="irA('mis-pedidos')"
-                                :class="[ currentView === 'mis-pedidos' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700', misPedidosSinPagar().length > 0 ? (currentView === 'mis-pedidos' ? 'animate-pulse-alerta-alerta text-amber-700 bg-amber-50 hover:bg-amber-100' : 'animate-pulse-alerta text-amber-700 bg-amber-50 hover:bg-amber-100') : '' ].join(' ')"   class="relative pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-bag-shopping"></i>
+                                :aria-current="currentView === 'mis-pedidos' ? 'page' : null"
+                                :class="[ currentView === 'mis-pedidos' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700', misPedidosSinPagar().length > 0 ? (currentView === 'mis-pedidos' ? 'animate-pulse-alerta-alerta text-amber-800' : 'animate-pulse-alerta text-amber-800') : '' ].join(' ')"   class="pill relative text-sm whitespace-nowrap"><i class="fa-solid fa-bag-shopping"></i>
                                 <span class="hidden sm:inline"> Mis pedidos</span>
                                 <!-- Aviso de pago pendiente -->
                                 <span x-show="misPedidosSinPagar().length > 0" x-cloak
-                                    class="badge-pago-pendiente absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center shadow-md ring-2 ring-white"   x-text="misPedidosSinPagar().length"></span>
+                                    class="badge-pago-pendiente pill-alert"   x-text="misPedidosSinPagar().length"></span>
                             </button>
                             <button type="button" @click="irA('pagar')"
-                                :class="currentView === 'pagar' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill px-4 py-2 text-sm flex items-center space-x-2 whitespace-nowrap"><i class="fa-solid fa-wallet"></i>
+                                :aria-current="currentView === 'pagar' ? 'page' : null"
+                                :class="currentView === 'pagar' ? 'pill-on text-brand-500' : 'text-slate-500 hover:text-slate-700'"   class="pill text-sm whitespace-nowrap"><i class="fa-solid fa-wallet"></i>
                                 <span class="hidden sm:inline"> Datos de pago</span>
                             </button>
                         </div>
@@ -1157,11 +1500,11 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     <button type="button" @click="alternarModoOscuro()"
                         :aria-label="modoOscuro ? 'Usar modo claro' : 'Usar modo oscuro'"
                         :title="modoOscuro ? 'Modo claro' : 'Modo oscuro'"
-                        class="btn btn-sm btn-ghost md:hidden w-9"><i class="fa-solid"   :class="modoOscuro ? 'fa-sun' : 'fa-moon'"></i>
+                        class="btn btn-sm btn-square btn-ghost md:hidden w-10 shrink-0"><i class="fa-solid"   :class="modoOscuro ? 'fa-sun' : 'fa-moon'"></i>
                     </button>
                     <!-- Salir (solo en móvil) -->
                     <button type="button" @click="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión"
-                        class="btn btn-sm btn-ghost md:hidden"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        class="btn btn-sm btn-square btn-ghost md:hidden w-10 shrink-0"><i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </button>
                 </div>
             </div>
@@ -1176,7 +1519,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                 <p class="text-xs font-medium text-rose-100 leading-relaxed mt-0.5"   x-text="errorGuardado"></p>
             </div>
             <button type="button" @click="errorGuardado = ''" aria-label="Cerrar aviso"
-                class="btn-icon on-color text-rose-200"><i class="fa-solid fa-xmark"></i>
+                class="btn-icon btn-icon-on-color"><i class="fa-solid fa-xmark"></i>
             </button>
         </div>
     </div>
@@ -1194,7 +1537,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             </div>
 
             <!-- Sin productos activos -->
-            <div x-show="errorTienda" x-cloak class="max-w-lg mx-auto text-center py-16"><div class="empty-ico w-24 h-24 mb-5 text-4xl bg-amber-100 text-amber-500"><i class="fa-solid fa-triangle-exclamation"></i>
+            <div x-show="errorTienda" x-cloak class="max-w-lg mx-auto text-center py-16"><div class="empty-ico empty-ico-md mb-5 bg-amber-100 text-amber-500"><i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <h3 class="text-xl font-black text-slate-700 mb-3"> No pudimos abrir la tienda</h3>
                 <p class="text-slate-500 font-medium leading-relaxed"   x-text="errorTienda"></p>
@@ -1224,7 +1567,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- Catalogo -->
             <div x-show="!errorTienda && catalogo.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><template x-for="prod in catalogo" :key="prod.clave">
-                    <div class="bg-white rounded-3xl border border-slate-100 p-5 flex flex-col fade-in-up"><div class="flex items-start justify-between gap-3 mb-3"><div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-200 to-pink-300 flex items-center justify-center text-brand-500 text-lg shrink-0"><i class="fa-solid fa-cookie-bite"></i>
+                    <div class="bg-white rounded-3xl border border-slate-100 p-5 flex flex-col fade-in-up"><div class="flex items-start justify-between gap-3 mb-3"><div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-200 to-pink-300 flex items-center justify-center text-brand-500 text-lg shrink-0"><i class="fa-solid fa-box"></i>
                             </div>
                             <div class="text-right"><span class="text-2xl font-black text-brand-500 tracking-tight"   x-text="formatMoney(prod.precio)"></span>
                                 <p class="sec-s"> por unidad</p>
@@ -1237,27 +1580,30 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="text-sm text-slate-500 font-medium leading-relaxed mt-1.5 flex-1"   x-text="prod.descripcion || 'Sin descripción por ahora.'"></p>
 
                         <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100"><div class="flex items-center bg-slate-50 rounded-xl border border-slate-200"   :class="textoStock(prod).agotado ? 'opacity-50' : ''"><button type="button" @click="prod.cant = Math.max(1, (prod.cant||1) - 1)"
-                                    :disabled="textoStock(prod).agotado" aria-label="Quitar una unidad"
-                                    class="btn-icon px-3 py-2.5 text-slate-400 hover:text-brand-500 disabled:cursor-not-allowed"><i class="fa-solid fa-minus text-xs"></i>
+                                    :disabled="textoStock(prod).agotado || (prod.cant||1) <= 1"
+                                    :aria-label="'Quitar una unidad de ' + prod.nombre"
+                                    class="btn-icon w-11 py-2.5 text-slate-400 hover:text-brand-500"><i class="fa-solid fa-minus text-xs"></i>
                                 </button>
                                 <input type="number" min="1" x-model.number="prod.cant" aria-label="Cantidad"
                                     :max="getStockDisponible(prod.clave, prod.stock) === null ? null : getStockDisponible(prod.clave, prod.stock)"
                                     :disabled="textoStock(prod).agotado"
                                     class="bg-transparent text-center font-black text-slate-700 outline-none text-base disabled:cursor-not-allowed w-12"><button type="button" @click="prod.cant = subirCantidad(prod)"
                                     :disabled="textoStock(prod).agotado || (getStockDisponible(prod.clave, prod.stock) !== null && (prod.cant||1) >= getStockDisponible(prod.clave, prod.stock))"
-                                    aria-label="Agregar una unidad"
-                                    class="btn-icon px-3 py-2.5 text-slate-400 hover:text-brand-500 disabled:cursor-not-allowed disabled:opacity-40"><i class="fa-solid fa-plus text-xs"></i>
+                                    :aria-label="'Agregar una unidad de ' + prod.nombre"
+                                    class="btn-icon w-11 py-2.5 text-slate-400 hover:text-brand-500"><i class="fa-solid fa-plus text-xs"></i>
                                 </button>
                             </div>
                             <button type="button" @click="encargar(prod, prod.cant || 1, prod.nota)"
                                 :disabled="textoStock(prod).agotado"
-                                class="flex-1 btn btn-sm"   :class="textoStock(prod).agotado ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-brand-400 hover:bg-brand-500 text-white hover:-translate-y-0.5'"   x-text="textoStock(prod).agotado ? 'Agotado' : 'Encargar'"></button>
+                                class="btn btn-sm flex-1"
+                                :class="textoStock(prod).agotado ? 'btn-off' : 'btn-brand'"
+                                x-text="textoStock(prod).agotado ? 'Agotado' : 'Encargar'"></button>
                         </div>
 
                         <input type="text" x-model="prod.nota" maxlength="120" placeholder="Nota (opcional)"
                             aria-label="Nota para el pedido"
                             class="inp mt-2 w-full px-3 py-2 text-xs font-medium"><p x-show="excedeStock(prod)" x-cloak
-                           class="badge badge-md badge-outline-rose mt-2 w-full justify-center"   x-text="'Solo quedan ' + getStockDisponible(prod.clave, prod.stock) + ' unidades'"></p>
+                           class="badge badge-md badge-outline-rose mt-2 w-full justify-center"   x-text="'Solo quedan ' + pluralUnidades(getStockDisponible(prod.clave, prod.stock))"></p>
 
                         <p x-show="!excedeStock(prod) && (prod.cant||1) > 1" class="mt-2 text-center text-xs font-bold text-slate-400"   x-text="'Total: ' + formatMoney(prod.precio * (prod.cant||1))"></p>
                     </div>
@@ -1292,7 +1638,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <div x-show="pedidosListos().length > 0" x-cloak
                 class="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-5 mb-4"><div class="flex items-start gap-4"><div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shrink-0"><i class="fa-solid fa-bell text-lg"></i>
                     </div>
-                    <div class="min-w-0"><p class="text-base font-black text-emerald-900 leading-tight"> ¡<span x-text="pedidosListos().length"></span> pedido listo para retirar!
+                    <div class="min-w-0"><p class="text-base font-black text-emerald-900 leading-tight"
+                            x-text="'¡' + plural(pedidosListos().length, 'pedido') + (pedidosListos().length === 1 ? ' listo para retirar!' : ' listos para retirar!')">
                         </p>
                         <p class="text-sm font-bold text-emerald-700 mt-1"><span x-text="pedidosListos().map(p => p.nombreProducto + ' (' + p.cantidad + ')').join(', ')"></span>
                         </p>
@@ -1305,8 +1652,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <div x-show="pedidos.length > 0 && misPedidosSinPagar().length > 0" x-cloak
                 class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 mb-6"><div class="flex items-start gap-4"><div class="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0 animate-pulse"><i class="fa-solid fa-bell text-lg"></i>
                     </div>
-                    <div class="flex-1 min-w-0"><p class="text-base font-black text-amber-900 leading-tight"> Te falta pagar <span x-text="misPedidosSinPagar().length"></span>
-                            pedido(s)
+                    <div class="flex-1 min-w-0"><p class="text-base font-black text-amber-900 leading-tight"
+                            x-text="'Te falta pagar ' + pluralPedidos(misPedidosSinPagar().length)">
                         </p>
                         <p class="text-sm font-bold text-amber-700 mt-1"> Monto pendiente: <span x-text="formatMoney(misDineroPorPagar())"></span>
                         </p>
@@ -1314,11 +1661,14 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                             Ella marca el pedido como pagado y te avisamos.
                         </p>
                         <div class="flex flex-wrap gap-2 mt-4"><button type="button" @click="irA('pagar')"
-                                class="btn btn-md btn-warn flex items-center gap-2"><i class="fa-solid fa-wallet"></i>
+                                class="btn btn-md btn-warn"><i class="fa-solid fa-wallet"></i>
                                 <span>Ver datos para pagar</span>
                             </button>
-                            <button type="button" @click="copiar(String(formatMoney(misDineroPorPagar())), 'monto')"
-                                class="btn btn-md border border-amber-300 bg-white text-amber-700 hover:bg-amber-100 flex items-center gap-2"><i class="fa-solid"   :class="copiado === 'monto' ? 'fa-check' : 'fa-copy'"></i>
+                            <!-- Se copia el numero pelado, no "$12.000": al
+                                 pegarlo en el formulario del banco el signo y
+                                 los puntos lo rechazan. -->
+                            <button type="button" @click="copiar(String(Math.round(misDineroPorPagar())), 'monto')"
+                                class="btn btn-md btn-amber-soft"><i class="fa-solid"   :class="copiado === 'monto' ? 'fa-check' : 'fa-copy'"></i>
                                 <span x-text="copiado === 'monto' ? 'Monto copiado' : 'Copiar monto'"></span>
                             </button>
                         </div>
@@ -1329,15 +1679,15 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <div x-show="pedidos.length === 0" class="text-center py-16"><div class="empty-ico mb-5"><i class="fa-solid fa-bag-shopping"></i>
                 </div>
                 <h3 class="text-xl font-black text-slate-600 mb-2"> Todavía no has pedido nada</h3>
-                <button type="button" @click="irA('tienda')" class="mt-4 btn btn-lg btn-brand"> Ver la tienda
+                <button type="button" @click="irA('tienda')" class="btn btn-lg btn-brand mt-4"> Ver la tienda
                 </button>
             </div>
 
             <div class="space-y-3"><template x-for="p in pedidos" :key="p.id">
-                    <div class="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-4"><div class="ico-lg ico-brand"><i class="fa-solid fa-cookie-bite"></i>
+                    <div class="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-4"><div class="ico-lg ico-brand"><i class="fa-solid fa-box"></i>
                         </div>
                         <div class="flex-1 min-w-0"><h4 class="font-extrabold text-slate-800 leading-tight"   x-text="p.nombreProducto"></h4>
-                            <p class="text-xs font-bold text-slate-500 mt-0.5"><span x-text="p.cantidad"></span> unidades · <span x-text="formatMoney(p.total)"></span>
+                            <p class="text-xs font-bold text-slate-500 mt-0.5"   x-text="pluralUnidades(p.cantidad) + ' · ' + formatMoney(p.total)">
                             </p>
                             <p class="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-1.5"><i class="fa-regular fa-clock"></i>
                                 <span x-text="formatoFecha(p.creado)"></span>
@@ -1351,7 +1701,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         </div>
                         <div class="flex flex-col items-end gap-2 shrink-0"><span class="badge badge-md"   :class="colorEstado(p.estado)"   x-text="textoEstado(p.estado)"></span>
                             <button x-show="puedeEditar(p)" type="button" @click="abrirEditorMiPedido(p)"
-                                class="btn btn-sm btn-ghost text-[11px] hover:bg-brand-50 hover:text-brand-600 flex items-center gap-1.5"><i class="fa-solid fa-pen"></i><span>Editar</span>
+                                :aria-label="'Editar el pedido de ' + p.nombreProducto"
+                                class="btn btn-sm btn-brand-soft"><i class="fa-solid fa-pen"></i><span>Editar</span>
                             </button>
                         </div>
                     </div>
@@ -1361,7 +1712,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
         <!-- ============ VISTA DATOS DE PAGO (comprador) ============ -->
         <div x-show="currentView === 'pagar'" x-transition.opacity.duration.400ms x-cloak>
-            <div class="flex items-center space-x-3 mb-6"><div class="ico-lg ico-emerald"><i class="fa-solid fa-wallet text-lg"></i>
+            <div class="flex items-center space-x-3 mb-6"><div class="ico-lg ico-emerald shrink-0"><i class="fa-solid fa-wallet text-lg"></i>
                 </div>
                 <div>
                     <h2 class="text-2xl font-black text-slate-800 leading-tight"> Datos de pago</h2>
@@ -1392,8 +1743,16 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <div class="flex-1 min-w-0"><p class="text-[10px] font-black uppercase tracking-widest text-slate-400"   x-text="fila.etiqueta"></p>
                             <p class="font-bold text-slate-800 break-all"   x-text="fila.valor"></p>
                         </div>
+                        <!-- OJO: este boton antes usaba la clase .toggle, que no trae padding ni
+                         tamano: quedaba del ancho de un iconito y era casi
+                         imposible de acertar con el dedo. Ahora es un
+                         .btn-icon de 2.25rem, con nombre para el lector de
+                         pantalla y con su estado de "Copiado". -->
                         <button type="button" @click="copiar(fila.valor, fila.etiqueta)"
-                            class="shrink-0 toggle"   :class="copiado === fila.etiqueta ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"><i class="fa-solid"   :class="copiado === fila.etiqueta ? 'fa-check' : 'fa-copy'"></i>
+                            :aria-label="'Copiar ' + fila.etiqueta"
+                            :title="copiado === fila.etiqueta ? fila.etiqueta + ' copiado' : 'Copiar ' + fila.etiqueta"
+                            class="btn-icon w-9 h-9 text-slate-400"
+                            :class="copiado === fila.etiqueta ? 'btn-icon-ok' : ''"><i class="fa-solid text-sm"   :class="copiado === fila.etiqueta ? 'fa-check' : 'fa-copy'"></i>
                         </button>
                     </div>
                 </template>
@@ -1403,7 +1762,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
         <!-- ============ EDITAR DATOS DE PAGO (Keilyn) ============ -->
         <div x-show="currentView === 'editar-pagos' && esDueno" x-transition.opacity.duration.400ms x-cloak>
-            <div class="flex items-center space-x-3 mb-6"><div class="w-12 h-12 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-500"><i class="fa-solid fa-credit-card text-lg"></i>
+            <div class="flex items-center space-x-3 mb-6"><div class="w-12 h-12 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-500 shrink-0"><i class="fa-solid fa-credit-card text-lg"></i>
                 </div>
                 <div>
                     <h2 class="text-2xl font-black text-slate-800 leading-tight"> Datos de pago para tus clientes</h2>
@@ -1420,7 +1779,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     placeholder="Nombre: NELSON DAVID FUENTES ALEGRIARut: 18465975-1&#10;Banco: BancoEstado&#10;Número Cuenta: 00018465975&#10;Correo: nfuentes@live.cl"
                     class="inp inp-area inp-mono text-xs w-full border-brand-200 focus:border-brand-400"></textarea>
                 <div class="flex items-center gap-3 mt-3"><button type="button" @click="parsearDatosBanco(pagosForm._pegado)"
-                        class="btn btn-md btn-brand flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i>
+                        class="btn btn-md btn-brand"><i class="fa-solid fa-wand-magic-sparkles"></i>
                         <span>Completar datos</span>
                     </button>
                     <p x-show="pagosPegados" x-cloak class="text-xs font-bold text-emerald-600 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Listo, revisa abajo y guarda
@@ -1431,7 +1790,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <div class="bg-white rounded-3xl border border-slate-100 p-6 space-y-4 max-w-2xl"><p class="text-xs font-black text-slate-400 uppercase tracking-widest"> O completa un campo a la vez</p>
                 <div>
                     <label class="lbl mb-1.5"> Banco o institución</label>
-                    <input type="text" aria-label="Banco o institucion" x-model="pagosForm.banco" placeholder="Ej: Banco de Chile"
+                    <input type="text" aria-label="Banco o institución" x-model="pagosForm.banco" placeholder="Ej: Banco de Chile"
                         class="inp w-full"></div>
                 <div>
                     <label class="lbl mb-1.5"> Titular de la cuenta</label>
@@ -1450,7 +1809,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
                 <div>
                     <label class="lbl mb-1.5"> Número de cuenta</label>
-                    <input type="text" aria-label="Numero de cuenta" x-model="pagosForm.cuenta" placeholder="Ej: 123456789"
+                    <input type="text" aria-label="Número de cuenta" x-model="pagosForm.cuenta" placeholder="Ej: 123456789"
                         class="inp w-full"></div>
                 <div>
                     <label class="lbl mb-1.5"> Correo</label>
@@ -1459,8 +1818,9 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         class="inp w-full"></div>
 
                 <div class="flex items-center gap-3 pt-2"><button type="button" @click="guardarPagos()"
-                        class="btn btn-md btn-brand flex items-center gap-2"><i class="fa-solid"   :class="pagosGuardados ? 'fa-check' : 'fa-floppy-disk'"></i>
-                        <span x-text="pagosGuardados ? 'Guardado' : 'Guardar datos'"></span>
+                        :disabled="guardandoPagos || pagosGuardados"
+                        class="btn btn-md"   :class="pagosGuardados ? 'btn-ok' : 'btn-brand'"><i class="fa-solid"   :class="pagosGuardados ? 'fa-check' : (guardandoPagos ? 'fa-spinner fa-spin' : 'fa-floppy-disk')"></i>
+                        <span x-text="pagosGuardados ? 'Guardado' : (guardandoPagos ? 'Guardando...' : 'Guardar datos')"></span>
                     </button>
                     <p x-show="pagosError" x-cloak class="text-sm font-bold text-rose-500"   x-text="pagosError"></p>
                 </div>
@@ -1472,45 +1832,45 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <!-- Las 6 secciones, en fila -->
             <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-5"><button type="button" @click="seccionPedidos = seccionPedidos === 'estados' ? null : 'estados'"
                     :aria-expanded="seccionPedidos === 'estados' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionPedidos === 'estados' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-list-check text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'estados' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-list-check text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionPedidos === 'estados' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Todos los pedidos'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Filtra y cambia estados</span>
+                    <span class="seg-t"   :class="seccionPedidos === 'estados' ? 'seg-t-on' : 'seg-t-off'">Todos los pedidos</span>
+                    <span class="seg-sub hidden sm:block"> Filtra y cambia estados</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'preparar' ? null : 'preparar'"
                     :aria-expanded="seccionPedidos === 'preparar' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionPedidos === 'preparar' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-kitchen-set text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'preparar' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-kitchen-set text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionPedidos === 'preparar' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Por preparar'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Qué tienes que hacer hoy</span>
+                    <span class="seg-t"   :class="seccionPedidos === 'preparar' ? 'seg-t-on' : 'seg-t-off'">Por preparar</span>
+                    <span class="seg-sub hidden sm:block"> Qué tienes que hacer hoy</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'manual' ? null : 'manual'"
                     :aria-expanded="seccionPedidos === 'manual' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionPedidos === 'manual' ? 'seg-on' : ''"><span class="ico ico-violet"><i class="fa-solid fa-store text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'manual' ? 'seg-on' : ''"><span class="ico ico-violet"><i class="fa-solid fa-cart-plus text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionPedidos === 'manual' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Agregar a mano'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Ventas que no llegaron por la web</span>
+                    <span class="seg-t"   :class="seccionPedidos === 'manual' ? 'seg-t-on' : 'seg-t-off'">Agregar a mano</span>
+                    <span class="seg-sub hidden sm:block"> Ventas que no llegaron por la web</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'historial' ? null : 'historial'"
                     :aria-expanded="seccionPedidos === 'historial' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionPedidos === 'historial' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-column text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'historial' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-column text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionPedidos === 'historial' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Historial de ventas'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Cuánto entró y cuánto vas</span>
+                    <span class="seg-t"   :class="seccionPedidos === 'historial' ? 'seg-t-on' : 'seg-t-off'">Historial de ventas</span>
+                    <span class="seg-sub hidden sm:block"> Cuánto entró y cuánto vas</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'clientes' ? null : 'clientes'"
                     :aria-expanded="seccionPedidos === 'clientes' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionPedidos === 'clientes' ? 'seg-on' : ''"><span class="ico ico-pink"><i class="fa-solid fa-users text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'clientes' ? 'seg-on' : ''"><span class="ico ico-pink"><i class="fa-solid fa-users text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionPedidos === 'clientes' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Clientes'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Quién compró y cuánto</span>
+                    <span class="seg-t"   :class="seccionPedidos === 'clientes' ? 'seg-t-on' : 'seg-t-off'">Clientes</span>
+                    <span class="seg-sub hidden sm:block"> Quién compró y cuánto</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'mermas' ? null : 'mermas'"
                     :aria-expanded="seccionPedidos === 'mermas' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionPedidos === 'mermas' ? 'seg-on' : ''"><span class="ico ico-rose"><i class="fa-solid fa-trash-can text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'mermas' ? 'seg-on' : ''"><span class="ico ico-rose"><i class="fa-solid fa-trash-can text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionPedidos === 'mermas' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Merma y desperdicio'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Lo que se perdió</span>
+                    <span class="seg-t"   :class="seccionPedidos === 'mermas' ? 'seg-t-on' : 'seg-t-off'">Merma y desperdicio</span>
+                    <span class="seg-sub hidden sm:block"> Lo que se perdió</span>
                 </button>
             </div>
 
@@ -1522,7 +1882,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> Filtra y cambia estados</p>
                     </div>
                     <button type="button" @click="seccionPedidos = null" aria-label="Cerrar Todos los pedidos"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                                     <div x-show="pedidosCargados && pedidos.length > 0 && contarEstado('pagado') === pedidos.length" x-cloak
@@ -1536,13 +1896,16 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                         <input type="search" x-model="buscarPedido" aria-label="Buscar pedido"
                                             placeholder="Buscar por N°, producto, persona o correo"
                                             class="inp w-full rounded-2xl pl-10 pr-4"></div>
-                            <!-- Resumen por estado -->
+                            <!-- Resumen por estado. "Ver todos" y los cuatro indicadores son el mismo
+                                 tipo de control: se marcan con aria-pressed para que se sepa
+                                 cual esta elegido. -->
                             <button type="button" @click="filtroPedido = 'todos'"
-                                class="row-card w-full flex flex-wrap items-center justify-between gap-3 border p-4 mb-3"   :class="filtroPedido === 'todos' ? 'border-transparent shadow-lg bg-white' : 'border-slate-100 bg-white/60'"><div class="flex items-center space-x-2"><i class="fa-solid fa-layer-group text-[10px] text-slate-700"></i>
+                                :aria-pressed="filtroPedido === 'todos' ? 'true' : 'false'"
+                                class="row-card w-full flex flex-wrap items-center justify-between gap-3 border p-4 mb-3"   :class="filtroPedido === 'todos' ? 'border-transparent shadow-lg bg-white' : 'border-slate-100 bg-white/60'"><div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[10px] text-slate-700"></i>
                                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400"> Ver todos</span>
                                 </div>
-                                <div class="flex items-center gap-4"><span class="text-[10px] font-bold text-slate-400"><span x-text="pedidosVisibles().length"></span> pedidos ·
-                                        <span x-text="unidadesVisibles()"></span> unidades
+                                <div class="flex items-center gap-4"><span class="text-[10px] font-bold text-slate-400"
+                                            x-text="pluralPedidos(pedidosVisibles().length) + ' · ' + plural(unidadesVisibles(), 'unidad')">
                                     </span>
                                     <span class="text-2xl font-black text-slate-700"   x-text="pedidosVisibles().length"></span>
                                 </div>
@@ -1555,7 +1918,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                         {k:'pagado', l:'Pagados', c:'violet', i:'fa-hand-holding-dollar'}
                                     ]" :key="est.k">
                                     <button type="button" @click="filtroPedido = est.k"
-                                        class="stat text-left border p-4"   :class="filtroPedido === est.k ? 'border-transparent shadow-lg bg-white' : 'border-slate-100 bg-white/60'"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid text-[10px]"   :class="est.i"   :style="'color:' + colorIcono(est.c)"></i>
+                                        :aria-pressed="filtroPedido === est.k ? 'true' : 'false'"
+                                        class="stat text-left border p-4"   :class="filtroPedido === est.k ? 'border-transparent shadow-lg bg-white' : 'border-slate-100 bg-white/60'"><div class="flex items-center gap-2 mb-1"><i class="fa-solid text-[10px]"   :class="est.i"   :style="'color:' + colorIcono(est.c)"></i>
                                             <span class="text-[10px] font-black uppercase tracking-widest text-slate-400"   x-text="est.l"></span>
                                         </div>
                                         <div class="text-2xl font-black text-slate-700"   x-text="contarVisibles(est.k)"></div>
@@ -1566,8 +1930,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                             <div class="bg-white rounded-3xl border border-slate-100 p-5 mb-6 flex flex-wrap items-center justify-between gap-4"><div>
                                     <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1"><span x-text="textoEstado(filtroPedido)"></span>
                                     </p>
-                                    <p class="text-sm font-bold text-slate-500"><span x-text="pedidosVisibles().length"></span> pedido(s) ·
-                                        <span x-text="unidadesFiltradas()"></span> unidades
+                                    <p class="text-sm font-bold text-slate-500"
+                                        x-text="pluralPedidos(pedidosVisibles().length) + ' · ' + plural(unidadesFiltradas(), 'unidad')">
                                     </p>
                                 </div>
                                 <div class="text-right"><p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1"> Total</p>
@@ -1580,7 +1944,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                 class="bg-amber-50 border border-amber-200 rounded-3xl p-5 mb-6 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center gap-3 min-w-0"><div class="w-11 h-11 bg-amber-500 text-white rounded-2xl flex items-center justify-center shrink-0"><i class="fa-solid fa-hand-holding-dollar text-lg"></i>
                                     </div>
                                     <div class="min-w-0"><p class="text-xs font-black uppercase tracking-widest text-amber-500"> Todavía te deben</p>
-                                        <p class="text-[11px] font-bold text-amber-700/70 mt-0.5"><span x-text="pedidosSinPagar().length"></span> pedido(s) sin marcar como pagado
+                                        <p class="text-[11px] font-bold text-amber-700/70 mt-0.5"
+                                            x-text="pluralPedidos(pedidosSinPagar().length) + ' sin marcar como pagado'">
                                         </p>
                                     </div>
                                 </div>
@@ -1593,9 +1958,12 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                 </div>
                                 <h3 class="text-lg font-black text-slate-700 mb-2"> No hay pedidos que coincidan</h3>
                                 <p class="text-sm text-slate-500 font-medium mb-5">
-                                    <span x-show="buscarPedido"> No encontramos nada para "<span x-text="buscarPedido"></span>"</span>
-                                    <span x-show="!buscarPedido"> No hay pedidos en <span x-text="textoEstado(filtroPedido)"></span></span>
-                                    .
+                                    <!-- El punto va DENTRO de cada rama. Antes estaba suelto
+                                         despues de las dos, y como la rama oculta igual deja su
+                                         espacio, se leia '...para "abc" .' con un espacio antes
+                                         del punto. -->
+                                    <span x-show="buscarPedido"   x-text="'No encontramos nada para “' + buscarPedido + '”.'"></span>
+                                    <span x-show="!buscarPedido" x-text="'No hay pedidos en ' + textoEstado(filtroPedido) + '.'"></span>
                                 </p>
                                 <button type="button" @click="buscarPedido = ''; filtroPedido = 'todos'"
                                     class="btn btn-md btn-ghost"> Ver todos los pedidos</button>
@@ -1612,9 +1980,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                           class="badge badge-violet"><i class="fa-solid fa-store text-[8px]"></i> Mostrador
                                                     </span>
                                                 </div>
-                                                <p class="text-xs font-bold text-slate-500 mt-0.5"><span x-text="p.cantidad"></span> unidades ·
-                                                    <span x-text="formatMoney(p.total)"></span> ·
-                                                    para <span x-text="p.compradorNombre"></span>
+                                                <p class="text-xs font-bold text-slate-500 mt-0.5"
+                                                    x-text="pluralUnidades(p.cantidad) + ' · ' + formatMoney(p.total) + ' · para ' + p.compradorNombre">
                                                 </p>
                                                 <p class="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-1.5 flex-wrap"><i class="fa-regular fa-clock"></i>
                                                     <span x-text="formatoFecha(p.creado)"></span>
@@ -1644,6 +2011,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                         <button type="button"
                                                             @click="pedirCambioEstado(p, est)"
                                                             :title="tituloEstadoBoton(p, est)"
+                                                            :aria-label="tituloEstadoBoton(p, est) + ' — pedido #' + (p.numero || 's/n')"
                                                             :class="(p.estado || 'pendiente') === est ? colorBotonEstado(est) : 'btn-ghost'"   :aria-pressed="(p.estado || 'pendiente') === est ? 'true' : 'false'"
                                                             class="btn btn-sm"   x-text="textoEstado(est)"></button>
                                                     </template>
@@ -1651,8 +2019,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                 <!-- X para eliminar (sutil) -->
                                                 <button type="button" @click="confirmarBorrarPedido(p)"
                                                     :title="'Eliminar pedido' + (p.numero ? ' #' + p.numero : '')"
-                                                    aria-label="Eliminar pedido"
-                                                    class="btn-icon danger w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-sm"></i>
+                                                    :aria-label="'Eliminar pedido ' + (p.numero ? '#' + p.numero : '') + ' de ' + (p.nombreProducto || '')"
+                                                    class="btn-icon danger w-8 h-8 text-slate-300"><i class="fa-solid fa-xmark text-sm"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -1669,17 +2037,16 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> Qué tienes que hacer hoy</p>
                     </div>
                     <button type="button" @click="seccionPedidos = null" aria-label="Cerrar Por preparar"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                             <!-- Resumen por producto: que falta preparar (ignora el filtro) -->
                             <div x-show="pedidosCargados && getPedidosPorProducto().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"><template x-for="g in getPedidosPorProducto()" :key="g.clave">
                                     <div class="bg-white rounded-3xl border border-slate-100 p-5"><p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1"> Preparar · por hacer</p>
                                         <h3 class="text-lg font-extrabold text-slate-800 leading-tight mb-4"   x-text="g.nombre"></h3>
-                                        <div class="flex items-baseline gap-2"><span class="text-5xl font-black text-brand-500 tracking-tight"   x-text="g.unidades"></span>
-                                            <span class="text-sm font-bold text-slate-500"> unidades</span>
+                                        <div class="flex items-baseline gap-2"><span class="text-5xl font-black text-brand-500 tracking-tight"   x-text="pluralUnidades(g.unidades)"></span>
                                         </div>
-                                        <p class="text-[11px] font-bold text-slate-400 mt-2"   x-text="g.pedidos.length + ' pedido' + (g.pedidos.length === 1 ? '' : 's')"></p>
+                                        <p class="text-[11px] font-bold text-slate-400 mt-2"   x-text="pluralPedidos(g.pedidos.length)"></p>
                                         <p class="text-sm font-black text-emerald-600 mt-1"   x-text="formatMoney(g.dinero)"></p>
                                     </div>
                                 </template>
@@ -1689,13 +2056,13 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== AGREGAR A MANO ==== -->
             <div x-show="seccionPedidos === 'manual'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-violet"><i class="fa-solid fa-store text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-violet"><i class="fa-solid fa-cart-plus text-sm"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Agregar a mano</h3>
                         <p class="sec-s"> Ventas que no llegaron por la web</p>
                     </div>
                     <button type="button" @click="seccionPedidos = null" aria-label="Cerrar Agregar a mano"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                             <!-- Agregar pedido manual (venta que no vino por la web) -->
@@ -1719,7 +2086,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                 placeholder="para que le aparezca en su cuenta"
                                                 class="inp w-full px-3 py-2.5"><p class="text-[10px] font-bold text-slate-400 mt-1.5 flex items-start gap-1.5"><i class="fa-solid fa-circle-info mt-0.5 shrink-0"></i>
                                                 <span x-text="manualParaComprador()
-                                                    ? 'Es tu propio correo: lo veras en Mis pedidos.'
+                                                    ? 'Es tu propio correo: lo verás en Mis pedidos.'
                                                     : 'Si esa persona tiene cuenta en la app con este correo, le aparecerá en Mis pedidos al entrar.'"></span>
                                             </p>
                                         </div>
@@ -1748,7 +2115,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                     </div>
 
                                     <div class="flex flex-wrap items-center gap-3"><button type="button" @click="agregarPedidoManual()"
-                                            class="btn btn-md btn-violet flex items-center gap-2"><i class="fa-solid fa-check"></i><span>Agregar pedido</span>
+                                            :disabled="guardandoPedidoManual"
+                                            class="btn btn-md btn-violet"><i class="fa-solid"   :class="guardandoPedidoManual ? 'fa-spinner fa-spin' : 'fa-check'"></i><span x-text="guardandoPedidoManual ? 'Agregando...' : 'Agregar pedido'"></span>
                                         </button>
                                         <p x-show="pedidoManualOk" x-cloak class="text-xs font-black text-emerald-600 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i><span x-text="pedidoManualOk"></span>
                                         </p>
@@ -1766,7 +2134,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> Cuánto entró y cuánto vas</p>
                     </div>
                     <button type="button" @click="seccionPedidos = null" aria-label="Cerrar Historial de ventas"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                             <!-- HISTORIAL DE VENTAS: ya vive dentro del acordeon de la seccion, asi
@@ -1787,7 +2155,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                     </div>
                                     <div class="bg-violet-50 border border-violet-100 rounded-2xl p-4"><span class="text-[10px] font-black uppercase tracking-widest text-violet-400"> Unidades vendidas</span>
                                         <div class="text-xl font-black text-violet-600 tracking-tight"   x-text="ventasDeEsteMes().unidades + ' uds'"></div>
-                                        <p class="text-[10px] font-bold text-slate-400 mt-1"   x-text="ventasDeEsteMes().pedidos + ' pedido(s) este mes'"></p>
+                                        <p class="text-[10px] font-bold text-slate-400 mt-1"   x-text="pluralPedidos(ventasDeEsteMes().pedidos) + ' este mes'"></p>
                                     </div>
                                 </div>
 
@@ -1827,7 +2195,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> Quién compró y cuánto</p>
                     </div>
                     <button type="button" @click="seccionPedidos = null" aria-label="Cerrar Clientes"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                             <!-- LISTA DE CLIENTES: idem, sin segundo acordeon -->
@@ -1860,11 +2228,11 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> Lo que se perdió</p>
                     </div>
                     <button type="button" @click="seccionPedidos = null" aria-label="Cerrar Merma y desperdicio"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                             <!-- MERMA / DESPERDICIO -->
-                            <div class="bg-white rounded-3xl border border-slate-100 p-5 mb-5"><div class="flex flex-wrap items-center justify-between gap-3 mb-4"><div class="flex items-center gap-3"><div class="ico ico-rose"><i class="fa-solid fa-trash-can"></i>
+                            <div class="bg-white rounded-3xl border border-slate-100 p-5 mb-5"><div class="flex flex-wrap items-center justify-between gap-3 mb-4"><div class="flex items-center gap-3"><div class="ico ico-rose shrink-0"><i class="fa-solid fa-trash-can"></i>
                                         </div>
                                         <div>
                                             <p class="text-sm font-black text-slate-800 leading-tight"> Merma y desperdicio</p>
@@ -1885,6 +2253,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                         class="inp inp-num px-3 py-2.5"><input type="text" x-model="mermaMotivo" aria-label="Motivo de la merma"
                                         placeholder="Motivo (opcional)" maxlength="60"
                                         class="inp px-3 py-2.5 font-medium"><button type="button" @click="registrarMerma(mermaClave, mermaUnidades, mermaMotivo)"
+                                        :disabled="guardandoMerma"
                                         class="btn btn-md btn-danger"> Registrar
                                     </button>
                                 </div>
@@ -1921,7 +2290,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                 </div>
                 <h2 class="text-3xl font-black text-slate-800 mb-3"   x-text="nombreCorto ? '¡Hola ' + nombreCorto + '! ❤️' : ''"></h2>
                 <p class="text-slate-500 max-w-md mx-auto mb-8 text-lg font-medium"> Todo gran imperio comienza con un primer producto. ¿Qué prepararemos hoy? ¿Empanadas, tortas, galletas?</p>
-                <button @click="addTab()" type="button" class="btn btn-lg btn-brand px-8 text-lg flex items-center space-x-3 group"><i class="fa-solid fa-plus-circle group-hover:rotate-90 transition-transform duration-300"></i>
+                <button @click="addTab()" type="button" class="btn btn-lg btn-brand px-8 text-lg group"><i class="fa-solid fa-plus-circle group-hover:rotate-90 transition-transform duration-300"></i>
                     <span>Crear mi primer producto</span>
                 </button>
             </div>
@@ -1930,44 +2299,47 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <div x-show="datosCargados && tabs.length > 0" x-cloak>
                 <!-- Pestañas (Tabs) -->
                 <div class="flex items-center justify-between mb-6 pb-2 border-b-2 border-slate-100 overflow-x-auto hide-scrollbar gap-2 fade-in-up"   role="tablist">
-                    <div class="flex items-center space-x-2"><template x-for="tab in tabs" :key="tab.id">
+                    <div class="flex items-center gap-2"><template x-for="tab in tabs" :key="tab.id">
                             <div class="relative group"><div role="tab" tabindex="0" @click="activeTabId = tab.id" @keydown.enter="activeTabId = tab.id"
                                     :aria-selected="activeTabId === tab.id ? 'true' : 'false'"
                                     :class="activeTabId === tab.id ? 'tab-on' : 'tab-off'"   class="tab cursor-pointer group-hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"><input type="text" aria-label="Nombre del producto" x-model="tab.name" @input="saveData()" @click.stop @keydown.stop
                                         class="bg-transparent outline-none w-auto max-w-[120px] sm:max-w-[150px] text-center placeholder-current transition-colors trans-rapido"   :class="activeTabId === tab.id ? 'text-white' : 'text-slate-600'"><span @click.stop="confirmDeleteTab(tab.id)" role="button" tabindex="0"
-                                        @keydown.enter.stop="confirmDeleteTab(tab.id)" aria-label="Eliminar producto"
-                                        class="ml-1 w-6 h-6 flex items-center justify-center rounded-full transition cursor-pointer"   :class="activeTabId === tab.id ? 'text-white/80 hover:bg-white/20 hover:text-white' : 'text-slate-300 hover:bg-rose-50 hover:text-rose-500'"><i class="fa-solid fa-trash-can text-[11px]"></i>
+                                        @keydown.enter.stop="confirmDeleteTab(tab.id)" @keydown.space.prevent.stop="confirmDeleteTab(tab.id)"
+                                        :aria-label="'Eliminar el producto ' + (tab.name || 'sin nombre')"
+                                        :title="'Eliminar ' + (tab.name || 'este producto')"
+                                        class="btn-icon ml-1 w-6 h-6"
+                                        :class="activeTabId === tab.id ? 'btn-icon-on-color' : 'btn-icon.danger'"><i class="fa-solid fa-trash-can text-[11px]"></i>
                                     </span>
                                 </div>
                             </div>
                         </template>
                     </div>
-                    
-                    <button type="button" @click="addTab()" class="btn btn-sm border border-amber-100 bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center space-x-2 shrink-0"><i class="fa-solid fa-plus"></i>
+
+                    <button type="button" @click="addTab()" class="btn btn-sm btn-amber-soft shrink-0"><i class="fa-solid fa-plus"></i>
                         <span class="hidden sm:inline"> Nuevo Producto</span>
                     </button>
                 </div>
             <!-- Las 3 secciones, en fila -->
             <div class="grid grid-cols-3 gap-2 mb-5"><button type="button" @click="seccionProducto = seccionProducto === 'resumen' ? null : 'resumen'"
                     :aria-expanded="seccionProducto === 'resumen' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionProducto === 'resumen' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-scale-balanced text-sm"></i>
+                    class="seg"   :class="seccionProducto === 'resumen' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-scale-balanced text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionProducto === 'resumen' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Resumen del negocio'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Dinero gastado, usado y por unidad</span>
+                    <span class="seg-t"   :class="seccionProducto === 'resumen' ? 'seg-t-on' : 'seg-t-off'">Resumen del negocio</span>
+                    <span class="seg-sub hidden sm:block"> Dinero gastado, usado y por unidad</span>
                 </button>
                 <button type="button" @click="seccionProducto = seccionProducto === 'graficos' ? null : 'graficos'; $nextTick(() => renderChartsSoon())"
                     :aria-expanded="seccionProducto === 'graficos' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionProducto === 'graficos' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-pie text-sm"></i>
+                    class="seg"   :class="seccionProducto === 'graficos' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-pie text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionProducto === 'graficos' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Gráficos'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> En qué se fue la plata</span>
+                    <span class="seg-t"   :class="seccionProducto === 'graficos' ? 'seg-t-on' : 'seg-t-off'">Gráficos</span>
+                    <span class="seg-sub hidden sm:block"> En qué se fue la plata</span>
                 </button>
                 <button type="button" @click="seccionProducto = seccionProducto === 'ficha' ? null : 'ficha'"
                     :aria-expanded="seccionProducto === 'ficha' ? 'true' : 'false'"
-                    class="seg flex flex-col items-center gap-1.5"   :class="seccionProducto === 'ficha' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-cookie-bite text-sm"></i>
+                    class="seg"   :class="seccionProducto === 'ficha' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-box text-sm"></i>
                     </span>
-                    <span class="text-[11px] font-black leading-tight"   :class="seccionProducto === 'ficha' ? 'text-slate-800' : 'text-slate-500'"   x-text="'Ficha del producto'"></span>
-                    <span class="text-[9px] font-bold text-slate-400 leading-tight hidden sm:block"> Rendimiento, stock y precio</span>
+                    <span class="seg-t"   :class="seccionProducto === 'ficha' ? 'seg-t-on' : 'seg-t-off'">Ficha del producto</span>
+                    <span class="seg-sub hidden sm:block"> Rendimiento, stock y precio</span>
                 </button>
             </div>
 
@@ -1981,11 +2353,11 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> Dinero gastado, usado y por unidad</p>
                     </div>
                     <button type="button" @click="seccionProducto = null" aria-label="Cerrar Resumen del negocio"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                                 <!-- RESUMEN GLOBAL DE GASTOS -->
-                                <div class="card p-5 sm:p-6 mb-6 fade-in-up"><div class="flex items-center justify-between mb-5"><div class="flex items-center space-x-3"><div class="w-11 h-11 bg-gradient-to-tr from-slate-700 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-300"><i class="fa-solid fa-wallet text-lg"></i>
+                                <div class="card p-5 sm:p-6 mb-6 fade-in-up"><div class="flex items-center justify-between mb-5"><div class="flex items-center space-x-3"><div class="w-11 h-11 bg-gradient-to-tr from-slate-700 to-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-300 shrink-0"><i class="fa-solid fa-wallet text-lg"></i>
                                             </div>
                                             <div>
                                                 <h2 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight"> Resumen de todo el negocio</h2>
@@ -1994,14 +2366,14 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"><div class="bg-rose-50/70 border border-rose-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-cart-shopping text-rose-400 text-xs"></i>
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"><div class="bg-rose-50/70 border border-rose-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-cart-shopping text-rose-400 text-xs shrink-0"></i>
                                                 <span class="text-[10px] font-black uppercase tracking-widest text-rose-400"> Total gasté</span>
                                             </div>
                                             <div class="text-2xl font-black text-rose-600 tracking-tight"   x-text="formatMoney(getTotalSpent())"></div>
                                             <p class="text-[10px] font-bold text-slate-400 mt-1"> En compras totales</p>
                                         </div>
 
-                                        <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-kitchen-set text-amber-400 text-xs"></i>
+                                        <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-kitchen-set text-amber-400 text-xs shrink-0"></i>
                                                 <span class="text-[10px] font-black uppercase tracking-widest text-amber-500"> Usé en recetas</span>
                                                 <i x-show="haySobreuso()" x-cloak class="fa-solid fa-triangle-exclamation text-amber-500 text-[10px] ml-auto"   title="Usas más de lo que compraste"></i>
                                             </div>
@@ -2009,14 +2381,14 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                             <p class="text-[10px] font-bold text-slate-400 mt-1"   x-text="getUsedPercent() + '% de lo que compré'"></p>
                                         </div>
 
-                                        <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-piggy-bank text-emerald-400 text-xs"></i>
+                                        <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-piggy-bank text-emerald-400 text-xs shrink-0"></i>
                                                 <span class="text-[10px] font-black uppercase tracking-widest text-emerald-500"> Me sobró</span>
                                             </div>
                                             <div class="text-2xl font-black text-emerald-600 tracking-tight"   x-text="formatMoney(getTotalLeftover())"></div>
                                             <p class="text-[10px] font-bold text-slate-400 mt-1"> Para la próxima receta</p>
                                         </div>
 
-                                        <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-sack-dollar text-blue-400 text-xs"></i>
+                                        <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-4"><div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-sack-dollar text-blue-400 text-xs shrink-0"></i>
                                                 <span class="text-[10px] font-black uppercase tracking-widest text-blue-500"> Ganaría</span>
                                             </div>
                                             <div class="text-2xl font-black text-blue-600 tracking-tight"   x-text="formatMoney(getTotalProfitPotential())"></div>
@@ -2048,7 +2420,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                             </div>
                                         </div>
 
-                                        <div class="mt-3 bg-violet-50/60 border border-violet-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-3"><div class="flex items-center gap-2.5 min-w-0"><i class="fa-solid fa-sack-dollar text-violet-400 text-sm shrink-0"></i>
+                                        <div class="mt-3 bg-violet-50/60 border border-violet-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-3"><div class="flex items-center gap-2.5 min-w-0"><i class="fa-solid fa-warehouse text-violet-400 text-sm shrink-0"></i>
                                                 <span class="text-xs font-bold text-slate-600"> Si vendes todo lo que produces</span>
                                             </div>
                                             <span class="text-base font-black text-violet-600 shrink-0"   x-text="formatMoney(getGananciaTotalInventario())"></span>
@@ -2070,11 +2442,11 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         <p class="sec-s"> En qué se fue la plata</p>
                     </div>
                     <button type="button" @click="seccionProducto = null" aria-label="Cerrar Gráficos"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                                 <!-- GRÁFICOS -->
-                                <div class="card p-5 sm:p-6 mb-6 fade-in-up"><div class="flex items-center space-x-3 mb-6"><div class="w-11 h-11 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200"><i class="fa-solid fa-chart-pie text-lg"></i>
+                                <div class="card p-5 sm:p-6 mb-6 fade-in-up"><div class="flex items-center space-x-3 mb-6"><div class="w-11 h-11 bg-gradient-to-tr from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0"><i class="fa-solid fa-chart-pie text-lg"></i>
                                         </div>
                                         <div>
                                             <h2 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight"> Gráficos del negocio</h2>
@@ -2095,7 +2467,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                     <strong class="text-lg font-black text-slate-700"   x-text="formatMoney(getTotalRepartido())"></strong>
                                                 </div>
                                             </div>
-                                            <div x-show="haySobreuso()" x-cloak class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-2.5 flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 text-[10px]"></i>
+                                            <div x-show="haySobreuso()" x-cloak class="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-2.5 flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 text-[10px] shrink-0"></i>
                                                 <p class="text-[10px] font-bold text-amber-700 leading-relaxed"> Usas más insumo del que compraste. Revisa las cantidades.
                                                 </p>
                                             </div>
@@ -2122,19 +2494,19 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== FICHA DEL PRODUCTO ==== -->
             <div x-show="seccionProducto === 'ficha'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-brand"><i class="fa-solid fa-cookie-bite text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-brand"><i class="fa-solid fa-box text-sm"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Ficha del producto</h3>
                         <p class="sec-s"> Rendimiento, stock y precio</p>
                     </div>
                     <button type="button" @click="seccionProducto = null" aria-label="Cerrar Ficha del producto"
-                        class="btn-icon ml-auto w-7 h-7 text-slate-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
+                        class="btn-icon ml-auto w-8 h-8 text-slate-300 shrink-0"><i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
                                 <!-- Contenido de la Pestaña Activa -->
                                 <template x-for="tab in tabs" :key="tab.id">
                                     <div x-show="activeTabId === tab.id" x-cloak class="space-y-6 fade-in-up"><!-- Rendimiento -->
-                                        <div class="card p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center space-x-4"><div class="ico-lg ico-amber animate-float"><i class="fa-solid fa-kitchen-set text-xl"></i>
+                                        <div class="card p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center space-x-4"><div class="ico-lg ico-amber animate-float shrink-0"><i class="fa-solid fa-kitchen-set text-xl"></i>
                                                 </div>
                                                 <div>
                                                     <h2 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight"> Cantidad a preparar</h2>
@@ -2147,33 +2519,34 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
                                         <!-- STOCK DISPONIBLE -->
                                         <div class="bg-white rounded-3xl p-5 border border-slate-100"><div class="flex flex-wrap items-center justify-between gap-4"><div class="min-w-0"><h2 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight"> Stock disponible</h2>
-                                                    <p class="text-xs text-slate-500 font-medium"> Si lo apagas, la tienda muestra "Sin límite" y cualquiera puede pedir.
+                                                    <p class="text-xs text-slate-500 font-medium"> Si lo apagas, la tienda muestra “Sin límite” y cualquiera puede pedir.
                                                     </p>
                                                 </div>
                                                 <div class="flex items-center gap-2"><button type="button" @click="alternarControlStock(tab)"
                                                         :class="controlStock(tab) ? 'toggle-on' : 'toggle-off'"   :aria-pressed="controlStock(tab) ? 'true' : 'false'"
-                                                        class="px-4 py-2.5 rounded-2xl font-bold text-xs transition-all flex items-center gap-2"><i class="fa-solid"   :class="controlStock(tab) ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+                                                        class="toggle text-xs"><i class="fa-solid"   :class="controlStock(tab) ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
                                                         <span x-text="controlStock(tab) ? 'Controlando' : 'Sin control'"></span>
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div x-show="controlStock(tab)" x-cloak class="mt-4 flex flex-wrap items-center gap-3"><div class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200"><button type="button" @click="cambiarStockUI(tab, -1)"
-                                                        aria-label="Quitar una unidad del stock" class="btn-icon w-9 h-9 border border-slate-200 text-slate-500 bg-white"> −</button>
+                                            <div x-show="controlStock(tab)" x-cloak class="mt-4 flex flex-wrap items-center gap-3"><div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200"><button type="button" @click="cambiarStockUI(tab, -1)"
+                                                        :disabled="getStockVivo(claveDeTab(tab), tab) <= 0"
+                                                        aria-label="Quitar una unidad del stock" class="btn-icon w-9 h-9 border border-slate-200 bg-white text-slate-500"> <i class="fa-solid fa-minus text-xs"></i></button>
                                                     <input type="number" min="0" aria-label="Unidades en stock" x-model.number="tab.stock"
                                                         @input.debounce.600ms="guardarStockUI(tab)" @change="guardarStockUI(tab)"
                                                         class="inp inp-b inp-num w-24 bg-white text-xl text-emerald-500 focus:border-emerald-300"><button type="button" @click="cambiarStockUI(tab, 1)"
-                                                        aria-label="Agregar una unidad al stock" class="btn-icon w-9 h-9 border border-slate-200 text-slate-500 bg-white"> +</button>
+                                                        aria-label="Agregar una unidad al stock" class="btn-icon w-9 h-9 border border-slate-200 bg-white text-slate-500"> <i class="fa-solid fa-plus text-xs"></i></button>
                                                 </div>
                                                 <p class="text-xs font-bold text-slate-500"> unidades para vender</p>
                                             </div>
 
                                             <!-- Tu numero no se mueve solo: aqui ves cuantas van y cuantas quedan en vivo -->
-                                            <div x-show="controlStock(tab)" x-cloak class="mt-2 text-xs font-bold text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1"><i class="fa-solid fa-bolt text-amber-400"></i>
+                                            <div x-show="controlStock(tab)" x-cloak class="mt-2 text-xs font-bold text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1"><i class="fa-solid fa-bolt text-amber-400 shrink-0"></i>
                                                 <span>Van <span class="text-brand-500 font-black"   x-text="unidadesPedidas(claveDeTab(tab))"></span> pedidas · quedan <span class="text-emerald-600 font-black"   x-text="getStockVivo(claveDeTab(tab), tab)"></span> disponibles</span>
                                             </div>
 
-                                            <p class="mt-2 text-[11px] font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-slate-300"></i>
+                                            <p class="mt-2 text-[11px] font-bold text-slate-400 flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-slate-300 shrink-0"></i>
                                                 Este número es tu tope y no baja solo. Los pedidos lo descuentan en vivo para los compradores.
                                             </p>
 
@@ -2185,7 +2558,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                  la app lo descuenta sola en segundo plano. -->
                                             <div x-show="getStockComprometido(claveDeTab(tab)) > 0" x-cloak
                                                 class="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-amber-700 flex items-center gap-2"><i class="fa-solid fa-rotate animate-spin"></i>
-                                                <span class="leading-relaxed"> Sincronizando <span x-text="getStockComprometido(claveDeTab(tab))"></span> unidad(es) pedidas con el stock...
+                                                <span class="leading-relaxed"
+                                                    x-text="'Sincronizando ' + pluralUnidades(getStockComprometido(claveDeTab(tab))) + ' pedidas con el stock...'">
                                                 </span>
                                             </div>
 
@@ -2197,7 +2571,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                             </div>
 
                                             <div x-show="controlStock(tab) && getStockVivo(claveDeTab(tab), tab) === 0" x-cloak
-                                                class="mt-3 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-rose-700 flex items-start gap-2"><i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                                                class="mt-3 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-rose-700 flex items-start gap-2"><i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0"></i>
                                                 <span>Stock en cero: la tienda mostrará este producto como Agotado y nadie podrá pedirlo.</span>
                                             </div>
                                         </div>
@@ -2209,15 +2583,24 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                         <p class="text-xs text-slate-500 font-medium"   x-text="tab.activo ? 'Los compradores ya pueden verlo y encargar.' : 'Los compradores no pueden verlo todavía.'"></p>
                                                     </div>
                                                 </div>
+                                                <!-- OJO: este boton tenia `text-white` pegado en el HTML. Con la utilidad
+                                                     presente, el texto se quedaba BLANCO sobre el gris
+                                                     de "Inactivo": 1.2:1 de contraste, ilegible en
+                                                     modo claro. Ahora el color lo pone el tono
+                                                     (.btn-ok / .btn-neutral) y no se puede desordenar.
+                                                     El <i> va con ancho fijo para que el boton no
+                                                     cambie de tamano al pasar de Activo a Inactivo. -->
                                                 <button type="button" @click="tab.activo = !tab.activo; saveData()"
-                                                    :class="tab.activo ? 'btn-ok' : 'btn-ghost bg-slate-200 hover:bg-slate-300'"   class="shrink-0 px-4 py-2.5 rounded-xl text-white font-bold text-sm transition-all trans-medio flex items-center gap-2"><i class="fa-solid"   :class="tab.activo ? 'fa-toggle-on text-xl' : 'fa-toggle-off text-xl'"></i>
+                                                    :aria-pressed="tab.activo ? 'true' : 'false'"
+                                                    :aria-label="tab.activo ? 'Publicado en la tienda. Tocar para ocultar' : 'Oculto en la tienda. Tocar para publicar'"
+                                                    :class="tab.activo ? 'btn-ok' : 'btn-neutral'"   class="btn btn-md shrink-0"><i class="fa-solid text-lg w-5 text-center"   :class="tab.activo ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
                                                     <span x-text="tab.activo ? 'Activo' : 'Inactivo'"></span>
                                                 </button>
                                             </div>
 
                                             <div>
                                                 <label class="lbl mb-1.5"> Descripción para los compradores</label>
-                                                <textarea aria-label="Descripcion del producto para los compradores" x-model="tab.description" @input="saveData()" rows="2" maxlength="200"
+                                                <textarea aria-label="Descripción del producto para los compradores" x-model="tab.description" @input="saveData()" rows="2" maxlength="200"
                                                     placeholder="Ej: Empanadas de pino rellenas de carne, 6 unidades por porción."
                                                     class="inp inp-area w-full"></textarea>
                                             </div>
@@ -2241,7 +2624,10 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                         </tr>
                                                     </thead>
                                                     <tbody class="divide-y divide-slate-50"><template x-for="(ing, idx) in tab.ingredients" :key="ing.id">
-                                                            <tr class="hover:bg-slate-50/80 transition-colors trans-rapido group"><td class="p-3 text-center align-middle"><button type="button" @click="confirmRemoveIngredient(tab, ing.id)" class="btn-icon danger w-8 h-8 text-slate-300 flex items-center justify-center"><i class="fa-solid fa-xmark"></i>
+                                                            <tr class="hover:bg-slate-50/80 transition-colors trans-rapido group"><td class="p-3 text-center align-middle"><button type="button" @click="confirmRemoveIngredient(tab, ing.id)"
+                                                                :aria-label="'Quitar el insumo ' + (ing.name || 'sin nombre')"
+                                                                :title="'Quitar ' + (ing.name || 'este insumo')"
+                                                                class="btn-icon danger w-8 h-8 text-slate-300"><i class="fa-solid fa-xmark"></i>
                                                                     </button>
                                                                 </td>
                                                                 <td class="p-3"><input type="text" aria-label="Nombre del insumo" x-model="ing.name" @input="saveData()" placeholder="Ej: Harina Selecta" class="compact-input"></td>
@@ -2267,14 +2653,14 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                     </tbody>
                                                 </table>
 
-                                                <div x-show="tab.ingredients.length === 0" class="p-10 text-center text-slate-400 bg-slate-50/50 m-4 rounded-2xl border-2 border-dashed border-slate-200"><div class="empty-ico w-16 h-16 mx-auto mb-3 text-2xl bg-white shadow-sm"><i class="fa-solid fa-basket-shopping text-2xl"></i>
+                                                <div x-show="tab.ingredients.length === 0" class="p-10 text-center text-slate-400 bg-slate-50/50 m-4 rounded-2xl border-2 border-dashed border-slate-200"><div class="empty-ico empty-ico-sm mb-3 bg-white shadow-sm"><i class="fa-solid fa-basket-shopping"></i>
                                                     </div>
                                                     <p class="text-sm font-bold text-slate-500"> Lista de compras vacía.</p>
                                                     <p class="text-xs mt-1"> Agrega tu primer ingrediente abajo.</p>
                                                 </div>
                                             </div>
 
-                                            <div class="p-4 bg-white border-t border-slate-100"><button type="button" @click="addIngredient(tab)" class="btn btn-md w-full border-2 border-dashed border-brand-200 text-brand-400 hover:bg-brand-400 hover:border-brand-400 hover:text-white flex items-center justify-center space-x-2 group"><i class="fa-solid fa-plus text-xs group-hover:rotate-90 transition-transform"></i>
+                                            <div class="p-4 bg-white border-t border-slate-100"><button type="button" @click="addIngredient(tab)" class="btn btn-md btn-dashed w-full group"><i class="fa-solid fa-plus text-xs group-hover:rotate-90 transition-transform"></i>
                                                     <span>Agregar ingrediente</span>
                                                 </button>
                                             </div>
@@ -2300,12 +2686,13 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                         </div>
                                                     </div>
 
-                                                    <div class="border-b border-white/10 pb-5"><p class="text-sm text-slate-400 font-medium mb-1"> Costo total por <strong class="text-white"   x-text="tab.batchYield"></strong> unidades:</p>
+                                                    <div class="border-b border-white/10 pb-5"><p class="text-sm text-slate-400 font-medium mb-1"
+                                                            x-text="num(tab.batchYield) > 0 ? 'Costo total por ' + plural(tab.batchYield, 'unidad') + ':' : 'Costo total de la receta:'"></p>
                                                         <div class="text-2xl font-black text-slate-100"   x-text="formatMoney(getTotalBatchCost(tab))"></div>
                                                     </div>
 
                                                     <div>
-                                                        <p class="text-xs text-brand-200 font-bold mb-2 uppercase tracking-widest"> Costo exacto de 1 SOLA UNIDAD:</p>
+                                                        <p class="text-xs text-brand-200 font-bold mb-2 uppercase tracking-widest"> Costo exacto de UNA unidad:</p>
                                                         <div class="text-5xl font-black text-white tracking-tight"   x-text="formatMoney(getCostPerItem(tab))"></div>
                                                         <div class="mt-4 bg-rose-500/20 border border-rose-500/30 rounded-xl p-3 flex items-start space-x-3"><i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5"></i>
                                                             <p class="text-[11px] text-rose-200 font-medium leading-relaxed"> Este es tu <strong>precio de quiebre</strong>. Nunca vendas por debajo de esto o estarás perdiendo dinero.
@@ -2320,11 +2707,13 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                 </h3>
 
                                                 <!-- Selector de modo -->
-                                                <div class="flex bg-slate-100 p-1 rounded-2xl mb-6 gap-1"><button type="button" @click="tab.priceMode = 'percent'; saveData()"
-                                                        :class="(tab.priceMode || 'percent') === 'percent' ? 'seg2-on text-emerald-600' : 'text-slate-500 hover:text-slate-700'"   class="seg2 flex-1 py-2.5 text-xs"> Porcentaje
+                                                <div class="seg-group"><button type="button" @click="tab.priceMode = 'percent'; saveData()"
+                                                        :aria-pressed="(tab.priceMode || 'percent') === 'percent' ? 'true' : 'false'"
+                                                        :class="(tab.priceMode || 'percent') === 'percent' ? 'seg2-on text-emerald-600' : 'text-slate-500 hover:text-slate-700'"   class="seg2 flex-1 text-xs"> Porcentaje
                                                     </button>
                                                     <button type="button" @click="tab.priceMode = 'custom'; saveData()"
-                                                        :class="tab.priceMode === 'custom' ? 'seg2-on text-emerald-600' : 'text-slate-500 hover:text-slate-700'"   class="seg2 flex-1 py-2.5 text-xs"> Mi propio precio
+                                                        :aria-pressed="tab.priceMode === 'custom' ? 'true' : 'false'"
+                                                        :class="tab.priceMode === 'custom' ? 'seg2-on text-emerald-600' : 'text-slate-500 hover:text-slate-700'"   class="seg2 flex-1 text-xs"> Mi propio precio
                                                     </button>
                                                 </div>
 
@@ -2332,9 +2721,17 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                 <div x-show="(tab.priceMode || 'percent') === 'percent'">
                                                     <p class="text-sm text-slate-600 font-bold mb-3"> ¿Cuánto quieres ganar por unidad?</p>
 
+                                                    <!-- OJO: el elegido llevaba `scale-105` y las otras un borde. Eso hacia dos
+                                                             cosas malas: el boton elegido se veía mas grande que sus
+                                                             vecinos, y al pasar el mouse la utilities `scale-105`
+                                                             se pisaba con el `transform` de .btn:hover, asi que el
+                                                             escalado desaparecia y volvia al pasar el mouse (parpadeo).
+                                                             Ahora los DOS estados tienen el mismo borde y la misma
+                                                             sombra: cambia el relleno, no el tamano. -->
                                                     <div class="flex flex-wrap gap-2 mb-6"><template x-for="margin in [30, 50, 70, 100]">
                                                             <button type="button" @click="tab.margin = margin; saveData()"
-                                                                :class="tab.margin === margin ? 'btn-ok scale-105' : 'btn-ghost border border-slate-200 hover:bg-slate-100'"   class="flex-1 min-w-[60px] py-2.5 rounded-xl text-sm transition-all trans-medio"><span x-text="margin + '%'"></span>
+                                                                :aria-pressed="Number(tab.margin) === margin ? 'true' : 'false'"
+                                                                :class="Number(tab.margin) === margin ? 'btn-ok' : 'btn-outline'"   class="btn btn-md flex-1 min-w-[60px]"><span x-text="margin + '%'"></span>
                                                             </button>
                                                         </template>
                                                     </div>
@@ -2394,7 +2791,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     <h3 class="text-xl font-bold text-slate-800 mb-2"> Costo vs. Precio</h3>
                     <p class="text-slate-600 text-sm leading-relaxed mb-4"> Imagina que haces una pulsera. El <strong>Costo</strong> es lo que pagaste por las mostacillas y el hilo. El <strong>Precio</strong> es a lo que se la vendes a tu amiga.
                     </p>
-                    <div class="bg-blue-50 p-3 rounded-xl text-xs font-bold text-blue-700"> Regla de oro: ¡El precio SIEMPRE debe ser mayor al costo!
+                    <div class="bg-blue-50 p-3 rounded-xl text-xs font-bold text-blue-700"> Regla de oro: ¡El precio SIEMPRE tiene que ser mayor que el costo!
                     </div>
                 </div>
 
@@ -2452,6 +2849,16 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                 cambioEstado: null,
                 editandoPedido: null,
                 edicionOk: '',
+                // ==== ESTADOS DE TRABAJO DE LOS BOTONES ====
+                // Sin esto, guardar dos veces seguidas (o tocarlo rapido) mandaba
+                // la misma escritura dos veces y el boton no daba ninguna pista
+                // de que ya estaba trabajando. Cada boton se deshabilita solo
+                // mientras dura su promesa.
+                guardandoPagos: false,
+                guardandoPedidoManual: false,
+                guardandoMerma: false,
+                guardandoEdicion: false,
+                borrandoPedido: false,
                 // Las secciones se abren por clave de la seccion. Antes valia 'todos',
                 // que no existe en ninguna: por eso Pedidos abria en blanco.
                 seccionPedidos: 'estados',
@@ -2481,8 +2888,14 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     title: '',
                     message: '',
                     icon: '',
+                    // Texto del boton que confirma. Antes decia siempre
+                    // "Sí, seguro" aunque lo que se borrara fuera una receta
+                    // entera: el boton no decia lo que hacia.
+                    confirmText: 'Sí, seguro',
                     action: null
                 },
+                // Boton que abrio el modal, para devolverle el foco al cerrar.
+                _focoAntesDelModal: null,
 
                 // ===== SESIÓN =====
                 usuario: null,
@@ -2740,7 +3153,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     }
 
                     if (!encontrados) {
-                        this.pagosError = 'No encontré datos. Usa el formato "Nombre: ...", "Banco: ...".';
+                        this.pagosError = 'No encontré datos. Usa el formato “Nombre: ...”, “Banco: ...”.';
                     } else {
                         this.pagosError = '';
                         this.pagosPegados = true;
@@ -2795,16 +3208,18 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                 tiempoRelativo(ms) {
                     if (!ms) return '';
                     const dif = Date.now() - Number(ms);
-                    if (dif < 0) return 'recien';
+                    if (dif < 0) return 'recién';
                     const min = Math.floor(dif / 60000);
-                    if (min < 1) return 'recien';
+                    if (min < 1) return 'recién';
                     if (min < 60) return 'hace ' + min + ' min';
                     const hor = Math.floor(min / 60);
                     if (hor < 24) return 'hace ' + hor + ' h';
                     const dia = Math.floor(hor / 24);
                     if (dia === 1) return 'ayer';
-                    if (dia < 30) return 'hace ' + dia + ' dias';
-                    return 'hace ' + Math.floor(dia / 30) + ' meses';
+                    // "dias" estaba sin tilde y nunca concordaba: salia
+                    // "hace 1 dias" y "hace 1 meses".
+                    if (dia < 30) return 'hace ' + this.plural(dia, 'día');
+                    return 'hace ' + this.plural(Math.floor(dia / 30), 'mes');
                 },
 
                 // Los cuatro estados, siempre. Antes se mostraban solo el actual y sus
@@ -3268,7 +3683,21 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     return cant;
                 },
 
+                // Envoltura: mientras se guarda, el boton queda deshabilitado. El trabajo de
+                // verdad esta en _guardarEdicionMiPedido, que puede salir por
+                // varios `return` temprano (falta stock, producto caido...) y
+                // asi el flag se suelta SIEMPRE, incluso en esos casos.
                 async guardarEdicionMiPedido() {
+                    if (this.guardandoEdicion) return;
+                    this.guardandoEdicion = true;
+                    try {
+                        await this._guardarEdicionMiPedido();
+                    } finally {
+                        this.guardandoEdicion = false;
+                    }
+                },
+
+                async _guardarEdicionMiPedido() {
                     const ed = this.editandoPedido;
                     if (!ed) return;
                     const original = ed.pedido;
@@ -3321,7 +3750,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                             // Solo alcanzamos a asegurar parte: el pedido queda
                             // con las unidades que de verdad se reservaron.
                             final = quedan + r.reservadas;
-                            this.edicionOk = 'Solo alcanzamos a asegurar ' + final + ' unidades.';
+                            this.edicionOk = 'Solo alcanzamos a asegurar ' + this.pluralUnidades(final) + '.';
                             setTimeout(() => { this.edicionOk = ''; }, 6000);
                         }
                         quedan += r.reservadas;
@@ -3444,7 +3873,9 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                     this.stockError = '';
 
                     if (r.descontados > 0) {
-                        this.stockOk = 'Se descontaron ' + r.descontados + ' unidad(es) del stock.';
+                        // OJO con la concordancia: "Se descontaron 1 unidad" estaba mal. Se redacta
+                        // con el verbo en impersonal para que valga para 1 y para muchos.
+                        this.stockOk = 'Unidades descontadas del stock: ' + this.pluralUnidades(r.descontados) + '.';
                     } else if (this.stockSinNodo(tab)) {
                         this.stockError = 'Primero crea el stock de ' + (tab.name || 'este producto') + '.';
                     } else {
@@ -3585,7 +4016,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         this.pedidoError = 'Nos quedamos sin stock de ' + producto.nombre + '. Te avisamos cuando vuelva.';
                         return;
                     } else if (Math.floor(cantidad) > disp) {
-                        this.pedidoError = 'Solo quedan ' + disp + ' unidades de ' + producto.nombre + '.';
+                        this.pedidoError = 'Solo quedan ' + this.pluralUnidades(disp) + ' de ' + producto.nombre + '.';
                         return;
                     }
                     const numero = await this.siguienteNumeroPedido();
@@ -3613,7 +4044,8 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         } else if (!r.ok) {
                             // Alcanzamos a reservar parte: ajustamos el pedido.
                             unidades = r.reservadas;
-                            this.pedidoOk = 'Alcanzamos a asegurar ' + unidades + ' de las ' + Math.floor(cantidad) + ' unidades.';
+                            this.pedidoOk = 'Alcanzamos a asegurar ' + this.pluralUnidades(unidades)
+                                + ' de las ' + this.pluralUnidades(Math.floor(cantidad)) + '.';
                         }
                     }
 
@@ -4187,6 +4619,18 @@ async conectarConToken(u) {
                     this.stockOk = '';
                     this.pedidoAEliminar = null;
                     this.pedidoManual = this.pedidoManualVacio();
+                    // Los botones se desbloquean al cerrar sesion: si una
+                    // escritura se quedo colgada, al volver a entrar el boton
+                    // aparecia apagado sin explicacion.
+                    this.guardandoPagos = false;
+                    this.guardandoPedidoManual = false;
+                    this.guardandoMerma = false;
+                    this.guardandoEdicion = false;
+                    this.borrandoPedido = false;
+                    this.editandoPedido = null;
+                    this.cambioEstado = null;
+                    this.modal.show = false;
+                    this.modal.action = null;
                     this.errorTienda = '';
                     this.tiendaCargada = false;
                     this.datosCargados = false;
@@ -4213,6 +4657,7 @@ async conectarConToken(u) {
 
                 async guardarPagos() {
                     if (!window.rtdbSet || !this.esDueno) return;
+                    if (this.guardandoPagos || this.pagosGuardados) return;   // no pulsar dos veces
                     const ref = this.refPagos();
                     const limpiar = (v) => (v || '').trim();
                     const datos = {
@@ -4223,6 +4668,8 @@ async conectarConToken(u) {
                         cuenta: limpiar(this.pagosForm.cuenta),
                         correo: limpiar(this.pagosForm.correo)
                     };
+                    this.guardandoPagos = true;
+                    this.pagosError = '';
                     try {
                         await window.rtdbSet(ref, datos);
                         this.pagosGuardados = true;
@@ -4238,6 +4685,8 @@ async conectarConToken(u) {
                         } else {
                             this.pagosError = 'No pudimos guardar' + (code ? ' (' + code + ')' : '') + '.';
                         }
+                    } finally {
+                        this.guardandoPagos = false;
                     }
                 },
 
@@ -4547,16 +4996,36 @@ async conectarConToken(u) {
                 },
 
                 // Modal Functions
-                showModal(title, message, icon, actionCallback) {
+                showModal(title, message, icon, actionCallback, confirmText) {
+                    // Se recuerda el boton que abrio el modal: al cerrarlo el
+                    // foco vuelve ahi. Sin esto, quien navega con el teclado
+                    // queda botado en el cuerpo de la pagina.
+                    try { this._focoAntesDelModal = document.activeElement; } catch (e) { /* no hay document */ }
                     this.modal.title = title;
                     this.modal.message = message;
                     this.modal.icon = icon;
                     this.modal.action = actionCallback;
+                    this.modal.confirmText = confirmText || 'Sí, seguro';
                     this.modal.show = true;
+                    // El foco entra al boton de confirmar: asi Enter/Espacio
+                    // repiten la accion y el teclado no sale del modal solo.
+                    this.$nextTick(() => {
+                        try {
+                            const b = this.$refs.modalConfirm;
+                            if (b && typeof b.focus === 'function') b.focus();
+                        } catch (e) { /* sin refs */ }
+                    });
                 },
                 closeModal() {
                     this.modal.show = false;
-                    setTimeout(() => { this.modal.action = null; }, 300);
+                    const devolver = this._focoAntesDelModal;
+                    this._focoAntesDelModal = null;
+                    setTimeout(() => {
+                        this.modal.action = null;
+                        try {
+                            if (devolver && typeof devolver.focus === 'function' && devolver.isConnected) devolver.focus();
+                        } catch (e) { /* el boton ya no existe */ }
+                    }, 300);
                 },
                 executeModalAction() {
                     if (this.modal.action) this.modal.action();
@@ -4565,9 +5034,11 @@ async conectarConToken(u) {
 
                 // Confirmations
                 confirmDeleteTab(id) {
+                    const tab = this.tabs.find(t => t.id === id);
                     this.showModal(
-                        '¿Eliminar producto?', 
-                        '¿Estás segura de borrar toda esta receta? No podrás recuperarla.', 
+                        '¿Eliminar producto?',
+                        'Se va a borrar “' + ((tab && tab.name) || 'este producto')
+                            + '” con toda su receta e insumos. No se puede deshacer.',
                         'fa-solid fa-trash-can',
                         () => {
                             this.tabs = this.tabs.filter(t => t.id !== id);
@@ -4577,12 +5048,29 @@ async conectarConToken(u) {
                                 this.activeTabId = null;
                             }
                             this.saveData();
-                        }
+                        },
+                        'Sí, borrar'
                     );
                 },
                 confirmRemoveIngredient(tab, ingId) {
-                    tab.ingredients = tab.ingredients.filter(i => i.id !== ingId);
-                    this.saveData();
+                    // Antes borraba el insumo al primer toque, sin preguntar: una
+                    // X de 2rem al lado del campo que estabas escribiendo se
+                    // aprieta sin querer y se perdia la fila con su costo. Ahora
+                    // pasa por el mismo modal que borrar un producto entero.
+                    const ing = (tab.ingredients || []).find(i => i.id === ingId);
+                    if (!ing) return;
+                    const nombre = ing.name || 'este insumo';
+                    this.showModal(
+                        '¿Quitar el insumo?',
+                        'Se va a quitar “' + nombre + '” de la receta. Si te equivocaste, '
+                            + 'tendrás que volver a escribir la cantidad y lo que pagaste.',
+                        'fa-solid fa-trash-can',
+                        () => {
+                            tab.ingredients = tab.ingredients.filter(i => i.id !== ingId);
+                            this.saveData();
+                        },
+                        'Sí, quitar'
+                    );
                 },
 
                 // Genera un id único. Date.now() solo puede repetirse si se hace clic
@@ -4743,6 +5231,8 @@ async conectarConToken(u) {
                 // y guarda la perdida para que los costos sean reales.
                 async registrarMerma(clave, unidades, motivo) {
                     if (!this.esDueno || !window.rtdbSet) return;
+                    if (this.guardandoMerma) return;   // no registrar dos veces
+                    this.mermaError = '';
                     const tab = this.tabs.find(t => this.claveDeTab(t) === clave);
                     if (!tab) { this.mermaError = 'Elige un producto.'; return; }
                     const u = Math.floor(this.num(unidades));
@@ -4760,6 +5250,7 @@ async conectarConToken(u) {
                         creado: Date.now()
                     };
                     let aviso = '';
+                    this.guardandoMerma = true;
                     try {
                         // Primero la perdida (que es el dato contable) y despues
                         // el stock. Si el ajuste de stock falla, la merma igual
@@ -4770,17 +5261,19 @@ async conectarConToken(u) {
                             const disponible = this.num(this.getStockVivo(clave, tab));
                             await this.ajustarStock(clave, Math.max(0, disponible - u));
                             if (u > disponible) {
-                                aviso = ' Solo había ' + disponible + ' unidades: el stock quedó en 0.';
+                                aviso = ' Solo había ' + this.pluralUnidades(disponible) + ': el stock quedó en 0.';
                             }
                             // La tienda se publica con el numero nuevo.
                             this.publicarCatalogoPronto();
                         }
-                        this.mermaOk = 'Merma de ' + u + ' unidad(es) registrada.' + aviso;
+                        this.mermaOk = 'Merma registrada: ' + this.pluralUnidades(u) + '.' + aviso;
                         this.mermaError = '';
                         setTimeout(() => { this.mermaOk = ''; }, 5000);
                     } catch (e) {
                         console.error('No se pudo registrar la merma:', e);
                         this.mermaError = 'No pudimos guardarla. Revisa las reglas de Firebase.';
+                    } finally {
+                        this.guardandoMerma = false;
                     }
                 },
 
@@ -4789,6 +5282,16 @@ async conectarConToken(u) {
                 // Keilyn registra una venta que no vino por la web.
                 async agregarPedidoManual() {
                     if (!this.esDueno || !window.rtdbSet) return;
+                    if (this.guardandoPedidoManual) return;   // no crear dos pedidos
+                    this.guardandoPedidoManual = true;
+                    try {
+                        await this._agregarPedidoManual();
+                    } finally {
+                        this.guardandoPedidoManual = false;
+                    }
+                },
+
+                async _agregarPedidoManual() {
                     const nombre = (this.pedidoManual.nombre || '').trim();
                     const unidades = Math.floor(this.num(this.pedidoManual.cantidad));
                     if (!nombre) { this.pedidoManualError = 'Escribe el nombre de quien pide.'; return; }
@@ -4919,17 +5422,26 @@ async conectarConToken(u) {
 
                 // Borrar un pedido. Lo borra de la lista y de la base.
                 confirmarBorrarPedido(pedido) {
+                    if (this.borrandoPedido) return;
                     this.pedidoAEliminar = pedido;
+                    this.$nextTick(() => {
+                        try {
+                            const b = this.$refs.borrarConfirm;
+                            if (b && typeof b.focus === 'function') b.focus();
+                        } catch (e) { /* sin refs */ }
+                    });
                 },
 
                 cancelarBorrarPedido() {
+                    if (this.borrandoPedido) return;   // no cancelar a media borrado
                     this.pedidoAEliminar = null;
                 },
 
                 async eliminarPedido() {
                     const pedido = this.pedidoAEliminar;
-                    this.pedidoAEliminar = null;
                     if (!pedido || !this.esDueno || !window.rtdbSet) return;
+                    if (this.borrandoPedido) return;    // no borrar dos veces
+                    this.borrandoPedido = true;
                     try {
                         // El stock se devuelve ANTES de borrar el pedido: si el
                         // borrado falla todavia queda el pedido y con el stock
@@ -4943,10 +5455,14 @@ async conectarConToken(u) {
                             this.publicarCatalogoPronto();
                         }
                         await window.rtdbSet(window.rtdbRef(window.db, this.rutaPedido(pedido)), null);
+                        // El modal recien se cierra cuando la escritura termino.
+                        this.pedidoAEliminar = null;
                     } catch (e) {
                         console.error('No se pudo eliminar el pedido:', e);
                         this.pedidoError = 'No pudimos eliminar el pedido.';
                         setTimeout(() => { this.pedidoError = ''; }, 5000);
+                    } finally {
+                        this.borrandoPedido = false;
                     }
                 },
 
@@ -5416,6 +5932,31 @@ async conectarConToken(u) {
                     return (v === null || v === undefined || v === '' || isNaN(v)) ? 0 : Number(v);
                 },
 
+                // Plural en Castellano. Antes la app escribia "pedido(s)" y
+                // "unidad(es)" en todas partes: en pantalla salia "2 pedido(s)"
+                // y "1 pedido(s)", que se ve como a medio hacer.
+                //   plural(1,'pedido')  -> "1 pedido"
+                //   plural(3,'pedido')  -> "3 pedidos"
+                plural(n, singular, pluralForma) {
+                    const num = this.num(n);
+                    if (Math.abs(num) === 1) return num + ' ' + singular;
+                    // Excepciones: palabras que no se derivan con la regla.
+                    const irregulares = { dia: 'días', mes: 'meses', 'año': 'años' };
+                    if (pluralForma) return num + ' ' + pluralForma;
+                    if (irregulares[singular]) return num + ' ' + irregulares[singular];
+                    // La regla NO es "sumar s": palabra terminada en vocal
+                    // consonante -> -s, y terminada en consonante -> -es.
+                    // asi: unidad -> unidades, mes -> meses, dia -> dias,
+                    //      pedido -> pedidos, lote -> lotes.
+                    const ultima = singular.slice(-1);
+                    const terminaEnVocal = 'aeiouáéíóú'.indexOf(ultima) !== -1;
+                    return num + ' ' + singular + (terminaEnVocal ? 's' : 'es');
+                },
+
+                // Atajos de las dos palabras que mas se repiten
+                pluralPedidos(n) { return this.plural(n, 'pedido'); },
+                pluralUnidades(n) { return this.plural(n, 'unidad'); },
+
                 round2(v) {
                     return Math.round(this.num(v) * 100) / 100;
                 },
@@ -5463,10 +6004,11 @@ async conectarConToken(u) {
                     <div>
                         <label class="lbl mb-1.5"> Cantidad</label>
                         <div class="flex items-center gap-2"><button type="button" @click="editandoPedido.cantidad = Math.max(1, (num(editandoPedido.cantidad)||1) - 1)"
-                                aria-label="Quitar una unidad" class="btn btn-sm btn-ghost px-4"> −</button>
+                                :disabled="(num(editandoPedido.cantidad)||1) <= 1"
+                                aria-label="Quitar una unidad" class="btn btn-md btn-square btn-ghost w-12 shrink-0"> <i class="fa-solid fa-minus text-xs"></i></button>
                             <input type="number" min="1" x-model.number="editandoPedido.cantidad" aria-label="Nueva cantidad"
                                 class="inp inp-num flex-1 px-3 py-2.5 text-lg"><button type="button" @click="editandoPedido.cantidad = subirCantidadEditar()"
-                                aria-label="Agregar una unidad" class="btn btn-sm btn-ghost px-4"> +</button>
+                                aria-label="Agregar una unidad" class="btn btn-md btn-square btn-ghost w-12 shrink-0"> <i class="fa-solid fa-plus text-xs"></i></button>
                         </div>
                     </div>
 
@@ -5482,10 +6024,11 @@ async conectarConToken(u) {
                 </template>
 
                 <div class="flex gap-3 mt-6"><button type="button" @click="cerrarEditorMiPedido()"
-                        class="flex-1 btn btn-md btn-ghost"> Cancelar
+                        class="btn btn-md btn-ghost flex-1"> Cancelar
                     </button>
                     <button type="button" @click="guardarEdicionMiPedido()"
-                        class="flex-1 btn btn-md btn-brand"> Guardar
+                        :disabled="guardandoEdicion"
+                        class="btn btn-md btn-brand flex-1"   x-text="guardandoEdicion ? 'Guardando...' : 'Guardar'">
                     </button>
                 </div>
             </div>
@@ -5514,10 +6057,12 @@ async conectarConToken(u) {
                 </p>
 
                 <div class="flex gap-3"><button type="button" @click="cancelarCambioEstado()"
-                        class="flex-1 btn btn-md btn-ghost"> Cancelar
+                        class="btn btn-md btn-ghost flex-1"> Cancelar
                     </button>
                     <button type="button" @click="confirmarCambioEstado()"
-                        class="flex-1 btn btn-md"   :class="cambioEstado && cambioEstado.estado === 'pagado' ? 'bg-violet-500 hover:bg-violet-600' : 'bg-emerald-500 hover:bg-emerald-600'"   x-text="cambioEstado ? 'Sí, ' + textoEstado(cambioEstado.estado) : ''"></button>
+                        class="btn btn-md flex-1"
+                        :class="cambioEstado && cambioEstado.estado === 'pagado' ? 'btn-violet' : 'btn-ok'"
+                        x-text="cambioEstado ? 'Sí, ' + textoEstado(cambioEstado.estado) : 'Sí'"></button>
                 </div>
             </div>
         </div>
@@ -5536,10 +6081,11 @@ async conectarConToken(u) {
                 </p>
                 <p class="text-xs font-medium text-rose-500 mb-6"> Se borra de la lista y de la base de datos. No se puede deshacer.</p>
                 <div class="flex gap-3"><button type="button" @click="cancelarBorrarPedido()"
-                        class="flex-1 btn btn-md btn-ghost"> Cancelar
+                        class="btn btn-md btn-ghost flex-1"> Cancelar
                     </button>
-                    <button type="button" @click="eliminarPedido()"
-                        class="flex-1 btn btn-md btn-danger"> Sí, eliminar
+                    <button type="button" @click="eliminarPedido()" x-ref="borrarConfirm"
+                        :disabled="borrandoPedido"
+                        class="btn btn-md btn-danger flex-1"   x-text="borrandoPedido ? 'Eliminando...' : 'Sí, eliminar'">
                     </button>
                 </div>
             </div>
