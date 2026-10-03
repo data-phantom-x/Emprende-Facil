@@ -622,14 +622,37 @@
            Todos miden lo mismo y comparten radio: asi una fila de 6 secciones
            se ve pareja en vez de escalonada.
            ===================================================================== */
-        .ico {
-            width: 2.25rem; height: 2.25rem;
-            border-radius: var(--r-sm);
-            display: inline-flex; align-items: center; justify-content: center;
+        /* OJO: el centrado va en la BASE compartida, no en cada variante.
+           Antes `display/align-items/justify-content` estaban solo en `.ico`, y
+           `.ico-lg` es una clase aparte (no un modificador de `.ico`), asi que
+           nunca los heredaba: quedaba como un div normal y el glifo se pegaba en
+           la ESQUINA SUPERIOR IZQUIERDA de la caja de 44px (medido: -14 a -20px
+           en horizontal y -9px en vertical). Por eso los tres .ico-lg de la app
+           se veian desalineados. */
+        .ico,
+        .ico-lg {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
+            border-radius: var(--r-sm);
             font-size: 0.875rem;
+            /* El glifo nunca debe empujar el cuadrito: sin esto, un nombre de
+               icono largo (o un .ico-lg con glifo grande) puede hacer que la
+               caja se estire y deje de ser cuadrada. */
+            overflow: hidden;
         }
+        .ico { width: 2.25rem; height: 2.25rem; }
         .ico-lg { width: 2.75rem; height: 2.75rem; border-radius: var(--r-md); font-size: 1.125rem; }
+
+        /* El TAMAÑO del glifo lo decide el chip, nunca una utility pegada al <i>.
+           Motivo real: el chip de "Cantidad a preparar" traia `text-xl` (20px)
+           encima de un `.ico-lg` que esta disenado para 1.125rem (18px), y quedo
+           2px mas grande que los otros .ico-lg de la app. Con esta regla un
+           `text-xl` o un `text-2xl` futuro se ignoran: el chip sigue mandando.
+           OJO: `.ico > i` pesa mas que `.text-xl` (una clase MAS un elemento
+           contra una sola clase), asi que gana sin necesitar !important. */
+        .ico > i, .ico-lg > i { font-size: 1em; }
         .ico-slate   { background-color: #f1f5f9; color: #475569; }
         .ico-brand   { background-color: #ffe4e6; color: #f43f5e; }
         .ico-rose    { background-color: #ffe4e6; color: #f43f5e; }
@@ -1712,7 +1735,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
         <!-- ============ VISTA DATOS DE PAGO (comprador) ============ -->
         <div x-show="currentView === 'pagar'" x-transition.opacity.duration.400ms x-cloak>
-            <div class="flex items-center space-x-3 mb-6"><div class="ico-lg ico-emerald shrink-0"><i class="fa-solid fa-wallet text-lg"></i>
+            <div class="flex items-center space-x-3 mb-6"><div class="ico-lg ico-emerald shrink-0"><i class="fa-solid fa-wallet"></i>
                 </div>
                 <div>
                     <h2 class="text-2xl font-black text-slate-800 leading-tight"> Datos de pago</h2>
@@ -1738,7 +1761,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                         {etiqueta:'Número de cuenta', valor:pagos && pagos.cuenta, ico:'fa-hashtag'},
                         {etiqueta:'Correo', valor:pagos && pagos.correo, ico:'fa-envelope'}
                     ]" :key="fila.etiqueta">
-                    <div x-show="fila.valor" class="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-3"><div class="ico ico-slate"><i class="fa-solid text-sm"   :class="fila.ico"></i>
+                    <div x-show="fila.valor" class="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-3"><div class="ico ico-slate"><i class="fa-solid"   :class="fila.ico"></i>
                         </div>
                         <div class="flex-1 min-w-0"><p class="text-[10px] font-black uppercase tracking-widest text-slate-400"   x-text="fila.etiqueta"></p>
                             <p class="font-bold text-slate-800 break-all"   x-text="fila.valor"></p>
@@ -1832,42 +1855,42 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <!-- Las 6 secciones, en fila -->
             <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-5"><button type="button" @click="seccionPedidos = seccionPedidos === 'estados' ? null : 'estados'"
                     :aria-expanded="seccionPedidos === 'estados' ? 'true' : 'false'"
-                    class="seg"   :class="seccionPedidos === 'estados' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-list-check text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'estados' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-list-check"></i>
                     </span>
                     <span class="seg-t"   :class="seccionPedidos === 'estados' ? 'seg-t-on' : 'seg-t-off'">Todos los pedidos</span>
                     <span class="seg-sub hidden sm:block"> Filtra y cambia estados</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'preparar' ? null : 'preparar'"
                     :aria-expanded="seccionPedidos === 'preparar' ? 'true' : 'false'"
-                    class="seg"   :class="seccionPedidos === 'preparar' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-kitchen-set text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'preparar' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-kitchen-set"></i>
                     </span>
                     <span class="seg-t"   :class="seccionPedidos === 'preparar' ? 'seg-t-on' : 'seg-t-off'">Por preparar</span>
                     <span class="seg-sub hidden sm:block"> Qué tienes que hacer hoy</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'manual' ? null : 'manual'"
                     :aria-expanded="seccionPedidos === 'manual' ? 'true' : 'false'"
-                    class="seg"   :class="seccionPedidos === 'manual' ? 'seg-on' : ''"><span class="ico ico-violet"><i class="fa-solid fa-cart-plus text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'manual' ? 'seg-on' : ''"><span class="ico ico-violet"><i class="fa-solid fa-cart-plus"></i>
                     </span>
                     <span class="seg-t"   :class="seccionPedidos === 'manual' ? 'seg-t-on' : 'seg-t-off'">Agregar a mano</span>
                     <span class="seg-sub hidden sm:block"> Ventas que no llegaron por la web</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'historial' ? null : 'historial'"
                     :aria-expanded="seccionPedidos === 'historial' ? 'true' : 'false'"
-                    class="seg"   :class="seccionPedidos === 'historial' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-column text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'historial' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-column"></i>
                     </span>
                     <span class="seg-t"   :class="seccionPedidos === 'historial' ? 'seg-t-on' : 'seg-t-off'">Historial de ventas</span>
                     <span class="seg-sub hidden sm:block"> Cuánto entró y cuánto vas</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'clientes' ? null : 'clientes'"
                     :aria-expanded="seccionPedidos === 'clientes' ? 'true' : 'false'"
-                    class="seg"   :class="seccionPedidos === 'clientes' ? 'seg-on' : ''"><span class="ico ico-pink"><i class="fa-solid fa-users text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'clientes' ? 'seg-on' : ''"><span class="ico ico-pink"><i class="fa-solid fa-users"></i>
                     </span>
                     <span class="seg-t"   :class="seccionPedidos === 'clientes' ? 'seg-t-on' : 'seg-t-off'">Clientes</span>
                     <span class="seg-sub hidden sm:block"> Quién compró y cuánto</span>
                 </button>
                 <button type="button" @click="seccionPedidos = seccionPedidos === 'mermas' ? null : 'mermas'"
                     :aria-expanded="seccionPedidos === 'mermas' ? 'true' : 'false'"
-                    class="seg"   :class="seccionPedidos === 'mermas' ? 'seg-on' : ''"><span class="ico ico-rose"><i class="fa-solid fa-trash-can text-sm"></i>
+                    class="seg"   :class="seccionPedidos === 'mermas' ? 'seg-on' : ''"><span class="ico ico-rose"><i class="fa-solid fa-trash-can"></i>
                     </span>
                     <span class="seg-t"   :class="seccionPedidos === 'mermas' ? 'seg-t-on' : 'seg-t-off'">Merma y desperdicio</span>
                     <span class="seg-sub hidden sm:block"> Lo que se perdió</span>
@@ -1876,7 +1899,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== TODOS LOS PEDIDOS ==== -->
             <div x-show="seccionPedidos === 'estados'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-slate"><i class="fa-solid fa-list-check text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-slate"><i class="fa-solid fa-list-check"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Todos los pedidos</h3>
                         <p class="sec-s"> Filtra y cambia estados</p>
@@ -2020,7 +2043,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                                 <button type="button" @click="confirmarBorrarPedido(p)"
                                                     :title="'Eliminar pedido' + (p.numero ? ' #' + p.numero : '')"
                                                     :aria-label="'Eliminar pedido ' + (p.numero ? '#' + p.numero : '') + ' de ' + (p.nombreProducto || '')"
-                                                    class="btn-icon danger w-8 h-8 text-slate-300"><i class="fa-solid fa-xmark text-sm"></i>
+                                                    class="btn-icon danger w-8 h-8 text-slate-300"><i class="fa-solid fa-xmark"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -2031,7 +2054,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== POR PREPARAR ==== -->
             <div x-show="seccionPedidos === 'preparar'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-brand"><i class="fa-solid fa-kitchen-set text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-brand"><i class="fa-solid fa-kitchen-set"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Por preparar</h3>
                         <p class="sec-s"> Qué tienes que hacer hoy</p>
@@ -2056,7 +2079,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== AGREGAR A MANO ==== -->
             <div x-show="seccionPedidos === 'manual'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-violet"><i class="fa-solid fa-cart-plus text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-violet"><i class="fa-solid fa-cart-plus"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Agregar a mano</h3>
                         <p class="sec-s"> Ventas que no llegaron por la web</p>
@@ -2128,7 +2151,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== HISTORIAL DE VENTAS ==== -->
             <div x-show="seccionPedidos === 'historial'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-blue"><i class="fa-solid fa-chart-column text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-blue"><i class="fa-solid fa-chart-column"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Historial de ventas</h3>
                         <p class="sec-s"> Cuánto entró y cuánto vas</p>
@@ -2189,7 +2212,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== CLIENTES ==== -->
             <div x-show="seccionPedidos === 'clientes'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-pink"><i class="fa-solid fa-users text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-pink"><i class="fa-solid fa-users"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Clientes</h3>
                         <p class="sec-s"> Quién compró y cuánto</p>
@@ -2202,7 +2225,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                             <div class="bg-white rounded-3xl border border-slate-100 p-5 mb-5 space-y-3"><p x-show="clientes().length === 0" class="text-xs font-medium text-slate-400 text-center py-6"> Todavía no hay clientes registrados.
                                 </p>
                                 <template x-for="c in clientes()" :key="c.uid">
-                                    <div class="flex items-center gap-3 bg-slate-50 rounded-2xl px-3 py-3"><div class="ico ico-slate"><i class="fa-solid fa-user text-sm"></i>
+                                    <div class="flex items-center gap-3 bg-slate-50 rounded-2xl px-3 py-3"><div class="ico ico-slate"><i class="fa-solid fa-user"></i>
                                         </div>
                                         <div class="flex-1 min-w-0"><p class="text-sm font-black text-slate-800 truncate"><span x-text="c.nombre"></span>
                                                 <span x-show="c.manuales > 0" class="text-[10px] font-bold text-violet-500"> · mostrador</span>
@@ -2222,7 +2245,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== MERMA Y DESPERDICIO ==== -->
             <div x-show="seccionPedidos === 'mermas'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-rose"><i class="fa-solid fa-trash-can text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-rose"><i class="fa-solid fa-trash-can"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Merma y desperdicio</h3>
                         <p class="sec-s"> Lo que se perdió</p>
@@ -2322,21 +2345,21 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
             <!-- Las 3 secciones, en fila -->
             <div class="grid grid-cols-3 gap-2 mb-5"><button type="button" @click="seccionProducto = seccionProducto === 'resumen' ? null : 'resumen'"
                     :aria-expanded="seccionProducto === 'resumen' ? 'true' : 'false'"
-                    class="seg"   :class="seccionProducto === 'resumen' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-scale-balanced text-sm"></i>
+                    class="seg"   :class="seccionProducto === 'resumen' ? 'seg-on' : ''"><span class="ico ico-slate"><i class="fa-solid fa-scale-balanced"></i>
                     </span>
                     <span class="seg-t"   :class="seccionProducto === 'resumen' ? 'seg-t-on' : 'seg-t-off'">Resumen del negocio</span>
                     <span class="seg-sub hidden sm:block"> Dinero gastado, usado y por unidad</span>
                 </button>
                 <button type="button" @click="seccionProducto = seccionProducto === 'graficos' ? null : 'graficos'; $nextTick(() => renderChartsSoon())"
                     :aria-expanded="seccionProducto === 'graficos' ? 'true' : 'false'"
-                    class="seg"   :class="seccionProducto === 'graficos' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-pie text-sm"></i>
+                    class="seg"   :class="seccionProducto === 'graficos' ? 'seg-on' : ''"><span class="ico ico-blue"><i class="fa-solid fa-chart-pie"></i>
                     </span>
                     <span class="seg-t"   :class="seccionProducto === 'graficos' ? 'seg-t-on' : 'seg-t-off'">Gráficos</span>
                     <span class="seg-sub hidden sm:block"> En qué se fue la plata</span>
                 </button>
                 <button type="button" @click="seccionProducto = seccionProducto === 'ficha' ? null : 'ficha'"
                     :aria-expanded="seccionProducto === 'ficha' ? 'true' : 'false'"
-                    class="seg"   :class="seccionProducto === 'ficha' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-box text-sm"></i>
+                    class="seg"   :class="seccionProducto === 'ficha' ? 'seg-on' : ''"><span class="ico ico-brand"><i class="fa-solid fa-box"></i>
                     </span>
                     <span class="seg-t"   :class="seccionProducto === 'ficha' ? 'seg-t-on' : 'seg-t-off'">Ficha del producto</span>
                     <span class="seg-sub hidden sm:block"> Rendimiento, stock y precio</span>
@@ -2347,7 +2370,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== RESUMEN DEL NEGOCIO ==== -->
             <div x-show="seccionProducto === 'resumen'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-slate"><i class="fa-solid fa-scale-balanced text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-slate"><i class="fa-solid fa-scale-balanced"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Resumen del negocio</h3>
                         <p class="sec-s"> Dinero gastado, usado y por unidad</p>
@@ -2436,7 +2459,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== GRÁFICOS ==== -->
             <div x-show="seccionProducto === 'graficos'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-blue"><i class="fa-solid fa-chart-pie text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-blue"><i class="fa-solid fa-chart-pie"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Gráficos</h3>
                         <p class="sec-s"> En qué se fue la plata</p>
@@ -2494,7 +2517,7 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
 
             <!-- ==== FICHA DEL PRODUCTO ==== -->
             <div x-show="seccionProducto === 'ficha'" x-cloak
-                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-brand"><i class="fa-solid fa-box text-sm"></i>
+                 class="card p-5 mb-5"><div class="sec flex items-center gap-2.5 mb-4 pb-3 border-b border-dashed border-slate-200"><span class="ico ico-brand"><i class="fa-solid fa-box"></i>
                     </span>
                     <div class="min-w-0"><h3 class="sec-t"> Ficha del producto</h3>
                         <p class="sec-s"> Rendimiento, stock y precio</p>
@@ -2506,7 +2529,14 @@ html.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #46557d; 
                                 <!-- Contenido de la Pestaña Activa -->
                                 <template x-for="tab in tabs" :key="tab.id">
                                     <div x-show="activeTabId === tab.id" x-cloak class="space-y-6 fade-in-up"><!-- Rendimiento -->
-                                        <div class="card p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center space-x-4"><div class="ico-lg ico-amber animate-float shrink-0"><i class="fa-solid fa-kitchen-set text-xl"></i>
+                                        <div class="card p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex items-center space-x-4"><!-- OJO: este chip NO lleva `animate-float` ni `text-xl`.
+                                             - La animacion lo subia 8px cada 3,2s y el cuadro se
+                                               separaba del titulo (se veia desalineado).
+                                             - `text-xl` (20px) le gana a `.ico-lg`, que esta
+                                               disenado para 1.125rem (18px): por eso quedaba
+                                               2px mas grande que los otros .ico-lg de la app.
+                                               Ahora el tamano sale solo de `.ico-lg`. -->
+                                                <div class="ico-lg ico-amber shrink-0"><i class="fa-solid fa-kitchen-set"></i>
                                                 </div>
                                                 <div>
                                                     <h2 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight"> Cantidad a preparar</h2>
@@ -6092,4 +6122,4 @@ async conectarConToken(u) {
         </div>
 
 </body>
-</html>
+</html> 
